@@ -1,0 +1,42 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: order-service
+
+  datasource:
+    # URL kết nối MySQL.
+    # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có (Tiện lợi)
+    # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
+    # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
+    url: jdbc:mysql://localhost:3306/ticket_orders?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: root          # <--- SỬA LẠI USER CỦA BẠN (thường là root)
+    password: 3307a001      # <--- SỬA LẠI PASS CỦA BẠN
+
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    # open-in-view: false (Best practice)
+    # Tắt việc giữ connection tới view layer, giúp tăng hiệu năng cho DB
+    open-in-view: false
+
+    hibernate:
+      # ddl-auto: update
+      # Tự động so sánh Entity và DB:
+      # - Nếu bảng chưa có -> Tự tạo.
+      # - Nếu thiếu cột -> Tự thêm.
+      # (Rất tiện cho giai đoạn code Khóa luận)
+      ddl-auto: update
+
+    # In câu SQL ra console để bạn debug xem Hibernate đang làm gì
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true # Format câu SQL cho đẹp dễ nhìn
+        dialect: org.hibernate.dialect.MySQLDialect
+
+# Cấu hình logging để dễ nhìn lỗi
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Xem giá trị tham số ? trong câu SQL

@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 @Builder
 @Table(name = "order_items", indexes = {
         @Index(name = "idx_order_id", columnList = "order_id"),
-        @Index(name = "idx_ticket_id", columnList = "ticket_id")
 })
 public class OrderItem {
     @Id

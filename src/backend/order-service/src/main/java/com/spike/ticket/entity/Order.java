@@ -27,6 +27,9 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "order_tracking_number", unique = true, nullable = false)
+    private String orderTrackingNumber;
+
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
