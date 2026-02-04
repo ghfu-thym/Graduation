@@ -6,7 +6,7 @@ import com.spike.ticket.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,5 +35,38 @@ public class OrderController {
         OrderResponse orderResponse = orderService.getOrderByTrackingNumber(trackingNumber);
 
         return ResponseEntity.ok(orderResponse);
+    }
+
+    @PutMapping("/{orderTrackingNumber}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable String orderTrackingNumber){
+        log.info("Cancel order with ID: {}", orderTrackingNumber);
+
+        OrderResponse orderResponse = orderService.cancelOrder(orderTrackingNumber);
+
+        return ResponseEntity.ok(orderResponse);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<OrderResponse>> getOrdersByUserID(
+            @RequestParam Long userID,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        log.info("Get orders by user ID: {}", userID);
+
+        Page<OrderResponse> response = orderService.getOrdersByUserID(userID, page, size);
+
+        if (response.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{orderTrackingNumber}/complete")
+    public ResponseEntity<OrderResponse> payOrder(@PathVariable String orderTrackingNumber){
+        log.info("Pay order with ID: {}", orderTrackingNumber);
+
+        return ResponseEntity.ok(orderService.completePayment(orderTrackingNumber));
     }
 }

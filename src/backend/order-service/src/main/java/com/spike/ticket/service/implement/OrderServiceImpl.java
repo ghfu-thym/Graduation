@@ -5,15 +5,23 @@ import com.spike.ticket.dto.respone.OrderResponse;
 import com.spike.ticket.entity.Order;
 import com.spike.ticket.entity.OrderItem;
 import com.spike.ticket.enums.OrderStatus;
+import com.spike.ticket.mapper.OrderMapper;
 import com.spike.ticket.repository.OrderRepository;
 import com.spike.ticket.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +29,8 @@ import java.util.UUID;
 public class OrderServiceImpl  implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderMapper orderMapper;
+    private final StringRedisTemplate redisTemplate;
     @Override
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -53,6 +63,17 @@ public class OrderServiceImpl  implements OrderService {
         Order savedOrder = orderRepository.save(order);
         log.info("Order saved with ID: {}", savedOrder.getId());
 
+        String redisKey = "order_timeout:"+savedOrder.getId();
+
+//        redisTemplate.opsForValue().set(
+//                redisKey,
+//                "PENDING",
+//                10,
+//                TimeUnit.MINUTES);
+
+        //Test
+        redisTemplate.opsForValue().set(redisKey, "PENDING",10, TimeUnit.SECONDS);
+
         //TODO: message to payment service
         //
 
@@ -65,6 +86,61 @@ public class OrderServiceImpl  implements OrderService {
         );
         return mapToResponse(order);
     }
+
+    @Override
+    public OrderResponse cancelOrder(String orderTrackingNumber) {
+
+        Order order = orderRepository.findByOrderTrackingNumber(orderTrackingNumber).orElseThrow(
+                () ->new RuntimeException("Order not found for tracking number: "+orderTrackingNumber)
+        );
+
+        //
+        if (order.getStatus() != OrderStatus.PENDING){
+            throw new RuntimeException("Only can cancel pending order!");
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+        log.info("Cancel order with ID: {}", orderTrackingNumber);
+
+        return mapToResponse(order);
+    }
+
+    @Override
+    public Page<OrderResponse> getOrdersByUserID(Long userID, int page, int size ) {
+        // Lưu ý cho FE: page -> số trang bắt đầu từ 0
+        // size -> số phần tử 1 trang
+        // sort theo id vì trong db id đang là auto incre
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+
+        Page<Order> history = orderRepository.findByUserId(userID, pageable);
+        return history.map(orderMapper::toOrderResponse);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse completePayment(String orderTrackingNumber) {
+
+        Order order = orderRepository.findByOrderTrackingNumber(orderTrackingNumber).orElseThrow(
+                () ->new RuntimeException("Order not found for tracking number: "+orderTrackingNumber)
+        );
+
+        if (order.getStatus() == OrderStatus.PAID){
+            return orderMapper.toOrderResponse(order);
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING){
+            throw new RuntimeException("Order is unavailable to be paid!");
+        }
+
+        order.setStatus(OrderStatus.PAID);
+        Order savedOrder = orderRepository.save(order);
+
+        //TODO: message to notification service
+
+        return orderMapper.toOrderResponse(savedOrder);
+    }
+
 
     // -------------------------------------------------------------------------
     // PRIVATE HELPER METHODS (MOCK)
