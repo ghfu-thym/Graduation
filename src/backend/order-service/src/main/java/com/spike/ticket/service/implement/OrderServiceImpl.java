@@ -1,5 +1,6 @@
 package com.spike.ticket.service.implement;
 
+import com.spike.ticket.client.TicketClient;
 import com.spike.ticket.dto.request.CreateOrderRequest;
 import com.spike.ticket.dto.respone.OrderResponse;
 import com.spike.ticket.entity.Order;
@@ -11,6 +12,7 @@ import com.spike.ticket.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,8 @@ public class OrderServiceImpl  implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final StringRedisTemplate redisTemplate;
+    @Qualifier("ticketClientMock")
+    private final TicketClient ticketClient;
     @Override
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -39,6 +43,12 @@ public class OrderServiceImpl  implements OrderService {
         boolean isSeatAvailable = mockCheckSeatAvailability(request.getSeatIds());
         if (!isSeatAvailable) {
             throw new RuntimeException("Selected seats are not available!");
+        }
+
+        boolean isReserved = ticketClient.reserveTicket(request.getSeatIds());
+
+        if (!isReserved) {
+            throw new RuntimeException("Ghế đã được người khác giữ hoặc không tồn tại!");
         }
 
         Order order = new Order();
