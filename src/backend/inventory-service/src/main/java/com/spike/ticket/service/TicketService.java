@@ -1,6 +1,7 @@
 package com.spike.ticket.service;
 
 
+import com.spike.ticket.dto.ReleaseTicketRequest;
 import com.spike.ticket.dto.ReserveTicketRequest;
 import com.spike.ticket.dto.TicketReservationResponse;
 import com.spike.ticket.entity.Ticket;
@@ -65,5 +66,16 @@ public class TicketService {
             throw new IllegalArgumentException("Invalid request!");
         }
         return responses;
+    }
+
+    @Transactional
+    public void releaseTickets(ReleaseTicketRequest request) {
+        if(request.getTicketIds() == null || request.getTicketIds().isEmpty()){
+            return;
+        }
+
+        int releaseCount = ticketRepository.releaseTickets(request);
+
+        log.info("Released {} tickets, orderID: {}", releaseCount, request.getOrderId());
     }
 }

@@ -1,5 +1,6 @@
 package com.spike.ticket.repository;
 
+import com.spike.ticket.dto.ReleaseTicketRequest;
 import com.spike.ticket.entity.Ticket;
 import com.spike.ticket.enums.TicketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
@@ -30,4 +32,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
         """, nativeQuery = true)
     Optional<Ticket> findAndLockAvailableTicket(@Param("eventId") Long eventId,
                                                 @Param("ticketType") String ticketType);
+
+    @Modifying
+    @Query("UPDATE Ticket t SET t.status = 'AVAILABLE' WHERE t.id IN :ticketIds AND t.status = 'RESERVED'")
+    int releaseTickets(@Param("ticketIds") ReleaseTicketRequest request);
 }

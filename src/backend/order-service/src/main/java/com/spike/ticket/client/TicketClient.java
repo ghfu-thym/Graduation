@@ -1,5 +1,6 @@
 package com.spike.ticket.client;
 
+import com.spike.ticket.dto.request.ReleaseTicketRequest;
 import com.spike.ticket.dto.request.ReserveTicketRequest;
 import com.spike.ticket.dto.respone.TicketReservationResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -12,4 +13,7 @@ import java.util.List;
 public interface TicketClient {
     @PostMapping("/api/v1/tickets/reserve")
     List<TicketReservationResponse> reserveTicket(@RequestBody ReserveTicketRequest request);
+
+    @PostMapping("/api/v1/tickets/release")
+    void releaseTicket(@RequestBody ReleaseTicketRequest request);
 }

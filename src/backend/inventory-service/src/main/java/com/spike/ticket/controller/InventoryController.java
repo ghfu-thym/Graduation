@@ -1,5 +1,6 @@
 package com.spike.ticket.controller;
 
+import com.spike.ticket.dto.ReleaseTicketRequest;
 import com.spike.ticket.dto.ReserveTicketRequest;
 import com.spike.ticket.dto.TicketReservationResponse;
 import com.spike.ticket.service.TicketService;
@@ -27,5 +28,11 @@ public class InventoryController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
+    }
+
+    @PostMapping("/release")
+    public ResponseEntity<?> releaseTickets(@RequestBody ReleaseTicketRequest request){
+        ticketService.releaseTickets(request);
+        return ResponseEntity.ok().build();
     }
 }

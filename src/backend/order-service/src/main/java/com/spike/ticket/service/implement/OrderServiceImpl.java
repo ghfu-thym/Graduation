@@ -63,7 +63,7 @@ public class OrderServiceImpl  implements OrderService {
         order.setStatus(OrderStatus.PENDING);
         order.setTotalAmount(request.getTotalPrice());
 
-        //Lấy tạm đồng giá vé 50k
+
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
 

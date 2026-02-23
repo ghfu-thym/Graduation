@@ -1,5 +1,8 @@
 package listener;
 
+import com.spike.ticket.client.TicketClient;
+import com.spike.ticket.dto.request.ReleaseTicketRequest;
+import com.spike.ticket.entity.OrderItem;
 import com.spike.ticket.enums.OrderStatus;
 import com.spike.ticket.repository.OrderRepository;
 import jakarta.transaction.Transactional;
@@ -9,14 +12,18 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Slf4j
 public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
 
     private final OrderRepository orderRepository;
-    public OrderTimeOutListener(RedisMessageListenerContainer listenerContainer, OrderRepository orderRepository) {
+    private final TicketClient ticketClient;
+    public OrderTimeOutListener(RedisMessageListenerContainer listenerContainer, OrderRepository orderRepository, TicketClient ticketClient) {
         super(listenerContainer);
         this.orderRepository = orderRepository;
+        this.ticketClient = ticketClient;
     }
 
     @Override
@@ -46,7 +53,21 @@ public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
 
                 log.info("Order with ID: {} is changed to timeout!", orderId);
 
-                //TODO: Gửi message sang inventory service nhả ticket
+                
+                List<Long> ticketIds = order.getOrderItems().stream()
+                        .map(OrderItem::getTicketId)
+                        .toList();
+                if (!ticketIds.isEmpty()){
+                    try{
+                        ReleaseTicketRequest request = ReleaseTicketRequest.builder()
+                                .ticketIds(ticketIds)
+                                .orderId(orderId)
+                                .build();
+                        ticketClient.releaseTicket(request);
+                    } catch (Exception e){
+                        log.error("Error releasing tickets for orderID {}, message: {}",orderId, e.getMessage());
+                    }
+                }
             } else {
                 log.info("Order {} cannot be changed to timeout! Current status:{}", orderId, order.getStatus());
             }
