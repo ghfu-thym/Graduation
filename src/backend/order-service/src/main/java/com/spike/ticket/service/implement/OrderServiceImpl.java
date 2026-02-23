@@ -4,6 +4,7 @@ import com.spike.ticket.client.TicketClient;
 import com.spike.ticket.dto.request.CreateOrderRequest;
 import com.spike.ticket.dto.request.ReserveTicketRequest;
 import com.spike.ticket.dto.respone.OrderResponse;
+import com.spike.ticket.dto.respone.TicketReservationResponse;
 import com.spike.ticket.entity.Order;
 import com.spike.ticket.entity.OrderItem;
 import com.spike.ticket.enums.OrderStatus;
@@ -14,7 +15,6 @@ import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +23,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -48,9 +49,9 @@ public class OrderServiceImpl  implements OrderService {
         ticketRequest.setQuantity(request.getQuantity());
 
 
-        List<Long> reservedTicketIds;
+        List<TicketReservationResponse> reservedTickets;
         try {
-            reservedTicketIds = ticketClient.reserveTicket(ticketRequest);
+            reservedTickets = ticketClient.reserveTicket(ticketRequest);
         } catch (FeignException.Conflict e){
             throw new RuntimeException("Failed to reserve tickets:");
         }
@@ -60,21 +61,25 @@ public class OrderServiceImpl  implements OrderService {
         order.setOrderTrackingNumber(UUID.randomUUID().toString());
         order.setUserId(request.getUserId());
         order.setStatus(OrderStatus.PENDING);
-        order.setTotalPrice(request.getTotalPrice());
+        order.setTotalAmount(request.getTotalPrice());
 
         //Lấy tạm đồng giá vé 50k
-        BigDecimal price = new BigDecimal(50000);
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        List<OrderItem> orderItems = new ArrayList<>();
 
-        for(Long seatId : request.getTicketIds()){
-            OrderItem orderItem = new OrderItem();
-            orderItem.setTicketId(seatId);
-            orderItem.setPrice(price);
-            orderItem.setSnapshotSeat("Seat"+seatId);
-            orderItem.setSnapshotEvent("Event A");
 
-            order.addOrderItem(orderItem);
+        for(TicketReservationResponse ticket : reservedTickets){
+            OrderItem item = OrderItem.builder()
+                    .order(order)
+                    .ticketId(ticket.getTicketId())
+                    .price(ticket.getPrice())
+                    .build();
+            orderItems.add(item);
+            totalAmount = totalAmount.add(ticket.getPrice());
         }
 
+        order.setOrderItems(orderItems);
+        order.setTotalAmount(totalAmount);
         Order savedOrder = orderRepository.save(order);
         log.info("Order saved with ID: {}", savedOrder.getId());
 
@@ -165,7 +170,7 @@ public class OrderServiceImpl  implements OrderService {
         return OrderResponse.builder()
                 .orderTrackingNumber(order.getOrderTrackingNumber())
                 .status(order.getStatus().name())
-                .totalPrice(order.getTotalPrice())
+                .totalPrice(order.getTotalAmount())
                 .createdAt(order.getCreatedAt())
                 .build();
     }

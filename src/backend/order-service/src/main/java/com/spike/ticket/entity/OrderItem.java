@@ -30,9 +30,9 @@ public class OrderItem {
     @Column(name = "price", nullable = false, precision = 15, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "snapshot_event", nullable = false)
-    private String snapshotEvent;
-
-    @Column(name = "snapshot_seat", nullable = false, length = 100)
-    private String snapshotSeat;
+//    @Column(name = "snapshot_event", nullable = false)
+//    private String snapshotEvent;
+//
+//    @Column(name = "snapshot_seat", nullable = false, length = 100)
+//    private String snapshotSeat;
 }

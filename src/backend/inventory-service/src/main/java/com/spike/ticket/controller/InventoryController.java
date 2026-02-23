@@ -1,6 +1,7 @@
 package com.spike.ticket.controller;
 
 import com.spike.ticket.dto.ReserveTicketRequest;
+import com.spike.ticket.dto.TicketReservationResponse;
 import com.spike.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ public class InventoryController {
     @PostMapping("/reserve")
     public ResponseEntity<?> reserveTickets(@RequestBody ReserveTicketRequest request){
         try {
-            List<Long> reservedTicketIds = ticketService.reserveTickets(request);
+            List<TicketReservationResponse> reservedTicketIds = ticketService.reserveTickets(request);
             return ResponseEntity.ok(reservedTicketIds);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
