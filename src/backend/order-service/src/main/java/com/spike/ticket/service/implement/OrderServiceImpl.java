@@ -2,6 +2,7 @@ package com.spike.ticket.service.implement;
 
 import com.spike.ticket.client.TicketClient;
 import com.spike.ticket.dto.request.CreateOrderRequest;
+import com.spike.ticket.dto.request.ReserveTicketRequest;
 import com.spike.ticket.dto.respone.OrderResponse;
 import com.spike.ticket.entity.Order;
 import com.spike.ticket.entity.OrderItem;
@@ -9,6 +10,7 @@ import com.spike.ticket.enums.OrderStatus;
 import com.spike.ticket.mapper.OrderMapper;
 import com.spike.ticket.repository.OrderRepository;
 import com.spike.ticket.service.OrderService;
+import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,11 +19,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -33,23 +35,26 @@ public class OrderServiceImpl  implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final StringRedisTemplate redisTemplate;
-    @Qualifier("ticketClientMock")
     private final TicketClient ticketClient;
     @Override
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
         log.info("Create order request for user: {}", request.getUserId());
 
-        boolean isSeatAvailable = mockCheckSeatAvailability(request.getSeatIds());
-        if (!isSeatAvailable) {
-            throw new RuntimeException("Selected seats are not available!");
+        ReserveTicketRequest ticketRequest = new ReserveTicketRequest();
+        ticketRequest.setEventID(request.getEventId());
+        ticketRequest.setTicketIds(request.getTicketIds());
+        ticketRequest.setTicketType(request.getTicketType());
+        ticketRequest.setQuantity(request.getQuantity());
+
+
+        List<Long> reservedTicketIds;
+        try {
+            reservedTicketIds = ticketClient.reserveTicket(ticketRequest);
+        } catch (FeignException.Conflict e){
+            throw new RuntimeException("Failed to reserve tickets:");
         }
 
-        boolean isReserved = ticketClient.reserveTicket(request.getSeatIds());
-
-        if (!isReserved) {
-            throw new RuntimeException("Ghế đã được người khác giữ hoặc không tồn tại!");
-        }
 
         Order order = new Order();
         order.setOrderTrackingNumber(UUID.randomUUID().toString());
@@ -60,7 +65,7 @@ public class OrderServiceImpl  implements OrderService {
         //Lấy tạm đồng giá vé 50k
         BigDecimal price = new BigDecimal(50000);
 
-        for(Long seatId : request.getSeatIds()){
+        for(Long seatId : request.getTicketIds()){
             OrderItem orderItem = new OrderItem();
             orderItem.setTicketId(seatId);
             orderItem.setPrice(price);
