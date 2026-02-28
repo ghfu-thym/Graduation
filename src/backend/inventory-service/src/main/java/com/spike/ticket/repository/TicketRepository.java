@@ -1,5 +1,6 @@
 package com.spike.ticket.repository;
 
+import com.spike.ticket.dto.ConfirmTicketRequest;
 import com.spike.ticket.dto.ReleaseTicketRequest;
 import com.spike.ticket.entity.Ticket;
 import com.spike.ticket.enums.TicketStatus;
@@ -35,5 +36,9 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     @Modifying
     @Query("UPDATE Ticket t SET t.status = 'AVAILABLE' WHERE t.id IN :ticketIds AND t.status = 'RESERVED'")
-    int releaseTickets(@Param("ticketIds") ReleaseTicketRequest request);
+    int releaseTickets(@Param("ticketIds") List<Long> ticketIds);
+
+    @Modifying
+    @Query("UPDATE Ticket t SET t.status = 'SOLD' WHERE t.id IN :ticketIds AND t.status = 'RESERVED'")
+    int confirmTickets(@Param("ticketIds") List<Long> ticketIds);
 }

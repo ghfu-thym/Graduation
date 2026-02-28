@@ -1,6 +1,7 @@
 package com.spike.ticket.controller;
 
 import com.spike.ticket.dto.request.CreateOrderRequest;
+import com.spike.ticket.dto.request.PaymentConfirmationRequest;
 import com.spike.ticket.dto.respone.OrderResponse;
 import com.spike.ticket.service.OrderService;
 import jakarta.validation.Valid;
@@ -63,10 +64,14 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{orderTrackingNumber}/complete")
-    public ResponseEntity<OrderResponse> payOrder(@PathVariable String orderTrackingNumber){
-        log.info("Pay order with ID: {}", orderTrackingNumber);
+    @PutMapping("/{orderTrackingNumber}/confirm-payment")
+    public ResponseEntity<OrderResponse> payOrder(
+            @PathVariable String orderTrackingNumber,
+            @RequestBody PaymentConfirmationRequest request){
 
-        return ResponseEntity.ok(orderService.completePayment(orderTrackingNumber));
+        log.info("Pay order with ID: {}", orderTrackingNumber);
+        // transactionId = txnId
+        OrderResponse orderResponse = orderService.completePayment(orderTrackingNumber, request.transactionId());
+        return ResponseEntity.ok(orderResponse);
     }
 }

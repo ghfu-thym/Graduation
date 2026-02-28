@@ -33,27 +33,26 @@ public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
             String expireKey = message.toString();
 
             if(expireKey.startsWith("order_timeout:")){
-                String orderID = expireKey.split(":")[1];
-                Long id = Long.parseLong(orderID);
+                String orderTrackingNumber = expireKey.replace("order_timeout:", "");
 
-                log.info("Order with ID: {} is timed out!", id);
+                log.info("Order with tracking number: {} is timed out!", orderTrackingNumber);
 
-                processOrderTimeOut(id);
+                processOrderTimeOut(orderTrackingNumber);
             }
         } catch (Exception e){
             log.error("Error processing order timeout event: {}", e.getMessage());
         }
     }
 
-    private void processOrderTimeOut(Long orderId){
-        orderRepository.findById(orderId).ifPresent(order -> {
+    private void processOrderTimeOut(String orderTrackingNumber){
+        orderRepository.findByOrderTrackingNumber(orderTrackingNumber).ifPresent(order -> {
             if (order.getStatus() == OrderStatus.PENDING){
                 order.setStatus(OrderStatus.TIMEOUT);
                 orderRepository.save(order);
 
-                log.info("Order with ID: {} is changed to timeout!", orderId);
+                log.info("Order with tracking number: {} is changed to timeout!", orderTrackingNumber);
 
-                
+
                 List<Long> ticketIds = order.getOrderItems().stream()
                         .map(OrderItem::getTicketId)
                         .toList();
@@ -61,15 +60,15 @@ public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
                     try{
                         ReleaseTicketRequest request = ReleaseTicketRequest.builder()
                                 .ticketIds(ticketIds)
-                                .orderId(orderId)
+                                .orderTrackingNumber(orderTrackingNumber)
                                 .build();
                         ticketClient.releaseTicket(request);
                     } catch (Exception e){
-                        log.error("Error releasing tickets for orderID {}, message: {}",orderId, e.getMessage());
+                        log.error("Error releasing tickets for orderID {}, message: {}",orderTrackingNumber, e.getMessage());
                     }
                 }
             } else {
-                log.info("Order {} cannot be changed to timeout! Current status:{}", orderId, order.getStatus());
+                log.info("Order {} cannot be changed to timeout! Current status:{}", orderTrackingNumber, order.getStatus());
             }
         });
     }

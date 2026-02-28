@@ -1,5 +1,6 @@
 package com.spike.ticket.client;
 
+import com.spike.ticket.dto.request.ConfirmTicketRequest;
 import com.spike.ticket.dto.request.ReleaseTicketRequest;
 import com.spike.ticket.dto.request.ReserveTicketRequest;
 import com.spike.ticket.dto.respone.TicketReservationResponse;
@@ -16,4 +17,7 @@ public interface TicketClient {
 
     @PostMapping("/api/v1/tickets/release")
     void releaseTicket(@RequestBody ReleaseTicketRequest request);
+
+    @PostMapping("api/v1/tickets/confirm")
+    void confirmTicket(@RequestBody ConfirmTicketRequest request);
 }

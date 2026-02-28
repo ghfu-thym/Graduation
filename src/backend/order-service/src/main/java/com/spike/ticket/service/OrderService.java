@@ -13,5 +13,5 @@ public interface OrderService {
 
     Page<OrderResponse> getOrdersByUserID(Long userID, int page, int size);
 
-    OrderResponse completePayment(String orderTrackingNumber);
+    OrderResponse completePayment(String orderTrackingNumber, String txnId);
 }

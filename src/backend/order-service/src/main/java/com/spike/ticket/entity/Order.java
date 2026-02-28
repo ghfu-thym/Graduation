@@ -14,7 +14,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "orders", indexes = {
-        @Index(name = "idx_user_id", columnList = "user_id")
+        @Index(name = "idx_user_id", columnList = "user_id"),
+        @Index(name = "idx_tracking_number", columnList = "order_tracking_number")
 })
 @Getter
 @Setter
@@ -27,7 +28,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order_tracking_number", unique = true, nullable = false)
+    @Column(name = "order_tracking_number", unique = true, nullable = false, updatable = false)
     private String orderTrackingNumber;
 
     @Column(name = "user_id", nullable = false)

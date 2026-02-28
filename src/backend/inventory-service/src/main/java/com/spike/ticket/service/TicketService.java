@@ -1,6 +1,7 @@
 package com.spike.ticket.service;
 
 
+import com.spike.ticket.dto.ConfirmTicketRequest;
 import com.spike.ticket.dto.ReleaseTicketRequest;
 import com.spike.ticket.dto.ReserveTicketRequest;
 import com.spike.ticket.dto.TicketReservationResponse;
@@ -74,8 +75,17 @@ public class TicketService {
             return;
         }
 
-        int releaseCount = ticketRepository.releaseTickets(request);
+        int releaseCount = ticketRepository.releaseTickets(request.getTicketIds());
 
-        log.info("Released {} tickets, orderID: {}", releaseCount, request.getOrderId());
+        log.info("Released {} tickets, orderTrackingNumber: {}", releaseCount, request.getOrderTrackingNumber());
+    }
+
+    @Transactional
+    public void confirmTickets(ConfirmTicketRequest request) {
+        if(request.getTicketIds() == null || request.getTicketIds().isEmpty()){
+            return;
+        }
+        int confirmCount = ticketRepository.confirmTickets(request.getTicketIds());
+        log.info("Confirmed {} tickets, order tracking number: {}", confirmCount, request.getOrderTrackingNumber());
     }
 }

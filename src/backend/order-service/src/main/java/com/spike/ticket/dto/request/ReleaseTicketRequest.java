@@ -14,5 +14,5 @@ import java.util.List;
 public class ReleaseTicketRequest {
     private List<Long> ticketIds;
 
-    private Long orderId;
+    private String orderTrackingNumber;
 }

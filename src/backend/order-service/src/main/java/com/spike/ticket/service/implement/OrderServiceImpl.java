@@ -1,6 +1,7 @@
 package com.spike.ticket.service.implement;
 
 import com.spike.ticket.client.TicketClient;
+import com.spike.ticket.dto.request.ConfirmTicketRequest;
 import com.spike.ticket.dto.request.CreateOrderRequest;
 import com.spike.ticket.dto.request.ReserveTicketRequest;
 import com.spike.ticket.dto.respone.OrderResponse;
@@ -81,9 +82,9 @@ public class OrderServiceImpl  implements OrderService {
         order.setOrderItems(orderItems);
         order.setTotalAmount(totalAmount);
         Order savedOrder = orderRepository.save(order);
-        log.info("Order saved with ID: {}", savedOrder.getId());
+        log.info("Order saved with tracking number: {}", savedOrder.getOrderTrackingNumber());
 
-        String redisKey = "order_timeout:"+savedOrder.getId();
+        String redisKey = "order_timeout:"+savedOrder.getOrderTrackingNumber();
 
 //        redisTemplate.opsForValue().set(
 //                redisKey,
@@ -139,8 +140,9 @@ public class OrderServiceImpl  implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse completePayment(String orderTrackingNumber) {
+    public OrderResponse completePayment(String orderTrackingNumber, String txnId) {
 
+        // lưu order đã được thanh toán
         Order order = orderRepository.findByOrderTrackingNumber(orderTrackingNumber).orElseThrow(
                 () ->new RuntimeException("Order not found for tracking number: "+orderTrackingNumber)
         );
@@ -154,7 +156,20 @@ public class OrderServiceImpl  implements OrderService {
         }
 
         order.setStatus(OrderStatus.PAID);
+        order.setTxnId(txnId);
         Order savedOrder = orderRepository.save(order);
+
+        // xóa redis
+        redisTemplate.delete("order_timeout:" + orderTrackingNumber);
+
+        //gọi tới inventory service chuyển vé sang SOLD
+        List<Long> ticketIds = savedOrder.getOrderItems().stream()
+                .map(OrderItem::getTicketId)
+                .toList();
+        ConfirmTicketRequest confirmTicketRequest = new ConfirmTicketRequest();
+        confirmTicketRequest.setTicketIds(ticketIds);
+        confirmTicketRequest.setOrderTrackingNumber(orderTrackingNumber);
+        ticketClient.confirmTicket(confirmTicketRequest);
 
         //TODO: message to notification service
 

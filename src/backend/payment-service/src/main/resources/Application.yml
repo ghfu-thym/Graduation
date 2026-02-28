@@ -1,0 +1,48 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    # URL kết nối MySQL với schema payment_db
+    # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có
+    # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
+    # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
+    url: jdbc:mysql://localhost:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: root          # <--- SỬA LẠI USER CỦA BẠN
+    password: 3307a001      # <--- SỬA LẠI PASS CỦA BẠN
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    # Tắt open-in-view để tăng hiệu năng
+    open-in-view: false
+    hibernate:
+      # ddl-auto: update - Tự động sync Entity với DB
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  # Redis configuration cho Distributed Lock (chống duplicate webhook)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password: your_redis_password  # Uncomment nếu Redis có password
+      timeout: 6000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 1
+
+# Logging
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.spike.ticket: DEBUG

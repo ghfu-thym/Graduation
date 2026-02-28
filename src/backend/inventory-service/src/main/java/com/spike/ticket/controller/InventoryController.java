@@ -1,5 +1,6 @@
 package com.spike.ticket.controller;
 
+import com.spike.ticket.dto.ConfirmTicketRequest;
 import com.spike.ticket.dto.ReleaseTicketRequest;
 import com.spike.ticket.dto.ReserveTicketRequest;
 import com.spike.ticket.dto.TicketReservationResponse;
@@ -34,5 +35,10 @@ public class InventoryController {
     public ResponseEntity<?> releaseTickets(@RequestBody ReleaseTicketRequest request){
         ticketService.releaseTickets(request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<?> confirmTickets(@RequestBody ConfirmTicketRequest request){
+        ticketService.confirmTickets(request);
     }
 }
