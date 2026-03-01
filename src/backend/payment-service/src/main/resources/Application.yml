@@ -11,8 +11,8 @@ spring:
     # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
     # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
     url: jdbc:mysql://localhost:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
-    username: root          # <--- SỬA LẠI USER CỦA BẠN
-    password: 3307a001      # <--- SỬA LẠI PASS CỦA BẠN
+    username: myuser
+    password: mypassword
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -46,3 +46,13 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     com.spike.ticket: DEBUG
+
+momo:
+  endpoint: https://test-payment.momo.vn/v2/gateway/api/create
+  partner-code: MOMOBKUN20180529
+  access-key: klm05TvNCzjfasWj
+  secret-key: at67qH6mk8g5HI18mGIcgVrcVQPN1OWK
+  # URL chuyển hướng về Frontend sau khi khách thanh toán xong (Return URL)
+  redirect-url: http://localhost:8082/api/v1/payments/momo-return
+  # URL Webhook chạy ngầm server-to-server (ĐƯỜNG HẦM NGROK CỦA BẠN)
+  ipn-url:  https://fidgetingly-intermeningeal-matha.ngrok-free.dev

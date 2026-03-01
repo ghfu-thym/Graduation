@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8080
 spring:
   application:
     name: order-service
@@ -10,8 +10,8 @@ spring:
     # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
     # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
     url: jdbc:mysql://localhost:3306/ticket_orders?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
-    username: root          # <--- SỬA LẠI USER CỦA BẠN (thường là root)
-    password: 3307a001      # <--- SỬA LẠI PASS CỦA BẠN
+    username: myuser
+    password: mypassword
 
     driver-class-name: com.mysql.cj.jdbc.Driver
 

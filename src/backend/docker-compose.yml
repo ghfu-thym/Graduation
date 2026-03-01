@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 1. Database chính (Ví dụ MySQL)
+  ticket-mysql:
+    image: mysql:8.0
+    container_name: ticket_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 3307a001
+      MYSQL_DATABASE: ticket_system_db
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "3306:3306" # Map port để Spring Boot ở localhost gọi vào được
+    volumes:
+      - mysql_data:/var/lib/mysql # QUAN TRỌNG: Giữ lại data khi tắt container
+
+  # 2. Redis dùng cho Pub/Sub Timeout và Lock
+  ticket-redis:
+    image: redis:alpine
+    container_name: ticket_cache
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass your_redis_password # Cài pass cho bảo mật
+    volumes:
+      - redis_data:/data
+
+    # 3. PostgreSQL cho Ticket Service
+  ticket-postgres:
+    image: postgres:15-alpine
+    container_name: ticket_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ticket_user
+      POSTGRES_PASSWORD: ticket_password
+      POSTGRES_DB: ticket_service_db
+    ports:
+      - "5432:5432" # Map port mặc định của Postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+# Khai báo ổ cứng ảo để dữ liệu không bị mất khi gõ docker-compose down
+volumes:
+  mysql_data:
+  redis_data:
+  postgres_data:

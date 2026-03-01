@@ -1,19 +1,14 @@
 server:
-  port: 8082
+  port: 8081
 spring:
   application:
     name: inventory-service
 
   datasource:
-    # URL kết nối MySQL.
-    # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có (Tiện lợi)
-    # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
-    # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
-#    url: jdbc:mysql://localhost:3306/ticket_orders?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
-#    username: root          # <--- SỬA LẠI USER CỦA BẠN (thường là root)
-#    password: 3307a001      # <--- SỬA LẠI PASS CỦA BẠN
-
-#    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://localhost:5432/ticket_service_db
+    username: ticket_user
+    password: ticket_password
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     # open-in-view: false (Best practice)
@@ -33,7 +28,7 @@ spring:
     properties:
       hibernate:
         format_sql: true # Format câu SQL cho đẹp dễ nhìn
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 # Cấu hình logging để dễ nhìn lỗi
 logging:
