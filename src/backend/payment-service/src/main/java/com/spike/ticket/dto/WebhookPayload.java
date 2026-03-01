@@ -14,7 +14,7 @@ public class WebhookPayload {
     private String orderTrackingNumber;
     private String providerTransactionId;
 
-    private String responseCode;
+    private int responseCode;
     private String responseMessage;
     private BigDecimal amount;
 

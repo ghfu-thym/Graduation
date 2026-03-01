@@ -1,5 +1,6 @@
 package com.spike.ticket.service;
 
+import com.spike.ticket.client.OrderClient;
 import com.spike.ticket.dto.WebhookPayload;
 import com.spike.ticket.entity.PaymentTransaction;
 import com.spike.ticket.enums.PaymentStatus;
@@ -18,19 +19,12 @@ import java.time.Duration;
 public class WebhookService {
     private final PaymentTransactionRepository paymentRepo;
     private final StringRedisTemplate redisTemplate;
-    // TODO: thêm feign client để gọi sang order-service
-    // private final OrderClient orderClient; // Feign client gọi sang order-service
+    private final OrderClient orderClient; // Feign client gọi sang order-service
 
     @Transactional
     public void processWebhook(WebhookPayload payload) {
         String orderTrackingNumber = payload.getOrderTrackingNumber();
 
-        // Kiểm tra chữ ký
-        if (!isValidSignature(payload)) {
-            log.error("Invalid signature for order tracking number: {}", orderTrackingNumber);
-            throw new IllegalArgumentException("Invalid signature");
-
-        }
 
         //Tạo khóa Redis (Distributed Lock) để chống race condition
         String redisKey = "order_timeout:"+orderTrackingNumber;
@@ -52,16 +46,15 @@ public class WebhookService {
             }
 
             //TODO: xem response code của momo,vnpay là gì
-            // giả sử response code "00" là thanh toán thành công
-            if ("00".equals(payload.getResponseCode())){
+            // response code = 0 la thanh cong
+            if (payload.getResponseCode()==0){
                 transaction.setStatus(PaymentStatus.SUCCESS);
                 transaction.setProviderTransactionId(payload.getProviderTransactionId());
                 paymentRepo.save(transaction);
 
                 log.info("Order {} is paid successfully. Call to order-service", orderTrackingNumber);
 
-                //TODO: call order service để chốt ticket
-                // orderClient.confirmOrderPaid(orderTrackingNumber);
+                orderClient.confirmOrderPaid(orderTrackingNumber);
             } else {
                 //khi thanh toán thất bại
                 transaction.setStatus(PaymentStatus.FAILED);
@@ -78,8 +71,4 @@ public class WebhookService {
 
     }
 
-    private boolean isValidSignature(WebhookPayload payload){
-        //test
-       return true;
-    }
 }

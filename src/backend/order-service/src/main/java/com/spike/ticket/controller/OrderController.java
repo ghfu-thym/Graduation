@@ -65,7 +65,7 @@ public class OrderController {
     }
 
     @PutMapping("/{orderTrackingNumber}/confirm-payment")
-    public ResponseEntity<OrderResponse> payOrder(
+    public ResponseEntity<OrderResponse> confirmOrderPaid(
             @PathVariable String orderTrackingNumber,
             @RequestBody PaymentConfirmationRequest request){
 

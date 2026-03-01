@@ -40,5 +40,6 @@ public class InventoryController {
     @PostMapping("/confirm")
     public ResponseEntity<?> confirmTickets(@RequestBody ConfirmTicketRequest request){
         ticketService.confirmTickets(request);
+        return ResponseEntity.ok().build();
     }
 }
