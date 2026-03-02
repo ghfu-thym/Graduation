@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.UUID;
 
@@ -19,13 +18,13 @@ public class MomoPaymentService {
     @Value("${momo.endpoint}")
     private String endpoint;
 
-    @Value("${momo.partnerCode}")
+    @Value("${momo.partner-code}")
     private String partnerCode;
 
-    @Value("${momo.accessKey}")
+    @Value("${momo.access-key}")
     private String accessKey;
 
-    @Value("${momo.secretKey}")
+    @Value("${momo.secret-key}")
     private String secretKey;
 
     @Value("${momo.redirect-url}")
@@ -34,13 +33,12 @@ public class MomoPaymentService {
     @Value("${momo.ipn-url}")
     private String ipnUrl;
 
-    private final RestTemplate restTemplate = new RestTemplate();
     private final RestClient momoRestClient;
 
     public String createPaymentLink(String orderTrackingNumber, Long amount) {
         String requestId = UUID.randomUUID().toString();
         String orderInfo = "Thanh toan don hang: " + orderTrackingNumber;
-        String requestType = "captureWallet";
+        String requestType = "payWithMethod";
         String extraData = "";
         String lang = "vi";
 
@@ -55,6 +53,10 @@ public class MomoPaymentService {
                 "&requestId="+requestId+
                 "&requestType="+requestType;
 
+        System.out.println("=== CHUỖI CỦA MOMO ===");
+        System.out.println("accessKey=klm05TvNCzjfasWj&amount=50000&extraData=&ipnUrl=" + ipnUrl + "&orderId=" + orderTrackingNumber + "&orderInfo=" + orderInfo + "&partnerCode=MOMOBKUN20180529&redirectUrl=" + redirectUrl + "&requestId=" + requestId + "&requestType=captureWallet");
+        System.out.println("=== CHUỖI CỦA BẠN ===");
+        System.out.println(rawData);
         String signature = HmacUtils.signHmacSha256(rawData, secretKey);
 
         MomoPaymentRequest  request = MomoPaymentRequest.builder()

@@ -11,5 +11,5 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
 
     Optional<PaymentTransaction> findByIdempotencyKey(String idempotencyKey);
 
-    Optional<PaymentTransaction> finByProviderTransactionId(String providerTransactionId);
+    Optional<PaymentTransaction> findByProviderTransactionId(String providerTransactionId);
 }

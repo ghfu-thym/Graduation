@@ -22,7 +22,7 @@ public class PaymentController {
     private final WebhookService webhookService;
     private final MomoPaymentService momoPaymentService;
 
-    @Value("${momo.secrete-key}")
+    @Value("${momo.secret-key}")
     private String secreteKey;
 
     @Value("${momo.access-key}")
