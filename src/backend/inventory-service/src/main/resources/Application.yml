@@ -30,6 +30,15 @@ spring:
         format_sql: true # Format câu SQL cho đẹp dễ nhìn
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: ticket-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
 # Cấu hình logging để dễ nhìn lỗi
 logging:
   level:

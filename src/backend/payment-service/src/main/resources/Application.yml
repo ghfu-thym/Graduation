@@ -39,6 +39,11 @@ spring:
           max-active: 10
           max-idle: 5
           min-idle: 1
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 # Logging
 logging:
