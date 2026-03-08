@@ -8,9 +8,9 @@ import com.spike.ticket.dto.respone.TicketReservationResponse;
 import com.spike.ticket.entity.Order;
 import com.spike.ticket.entity.OrderItem;
 import com.spike.ticket.enums.OrderStatus;
+import com.spike.ticket.kafka.publisher.OrderEventPublisher;
 import com.spike.ticket.mapper.OrderMapper;
 import com.spike.ticket.repository.OrderRepository;
-import com.spike.ticket.service.OrderEventPublisher;
 import com.spike.ticket.service.OrderService;
 import feign.FeignException;
 import jakarta.transaction.Transactional;
@@ -23,7 +23,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -66,7 +65,7 @@ public class OrderServiceImpl  implements OrderService {
         order.setTotalAmount(request.getTotalPrice());
 
 
-        BigDecimal totalAmount = BigDecimal.ZERO;
+        Long totalAmount = 0L;
         List<OrderItem> orderItems = new ArrayList<>();
 
 
@@ -77,7 +76,7 @@ public class OrderServiceImpl  implements OrderService {
                     .price(ticket.getPrice())
                     .build();
             orderItems.add(item);
-            totalAmount = totalAmount.add(ticket.getPrice());
+            totalAmount += ticket.getPrice();
         }
 
         order.setOrderItems(orderItems);
@@ -149,6 +148,12 @@ public class OrderServiceImpl  implements OrderService {
 
         if (order.getStatus() == OrderStatus.PAID){
             log.info("Order {} already paid, skipping.", orderTrackingNumber);
+            return;
+        }
+
+        if (order.getStatus() == OrderStatus.CANCELLED|| order.getStatus() == OrderStatus.TIMEOUT){
+            log.info("Order {} is cancelled or timeout, refund in process.", orderTrackingNumber);
+            orderEventPublisher.publishRefundOrder(orderTrackingNumber, order.getTotalAmount());
             return;
         }
 

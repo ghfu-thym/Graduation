@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
@@ -53,7 +51,7 @@ public class PaymentController {
                 .providerTransactionId(String.valueOf(request.getTransId()))
                 .responseCode(request.getResultCode())
                 .responseMessage(request.getMessage())
-                .amount(BigDecimal.valueOf(request.getAmount()))
+                .amount(request.getAmount())
                 .signature(request.getSignature())
                 .build();
 

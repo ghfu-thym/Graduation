@@ -5,8 +5,6 @@ import com.spike.ticket.enums.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
-
 @Entity
 @Table(name = "tickets", uniqueConstraints = @UniqueConstraint(name = "unique_ticket_per_event", columnNames = {"event_id", "ticket_number"}))
 @Getter
@@ -30,7 +28,7 @@ public class Ticket {
     private TicketStatus status;
 
     @Column(name = "price", nullable = false, precision = 15, scale = 2)
-    private BigDecimal price;
+    private Long price;
 
     @Version
     private Integer version;

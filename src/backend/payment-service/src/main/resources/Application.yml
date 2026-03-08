@@ -44,6 +44,13 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: payment-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
 
 # Logging
 logging:
@@ -53,7 +60,8 @@ logging:
     com.spike.ticket: DEBUG
 
 momo:
-  endpoint: https://test-payment.momo.vn/v2/gateway/api/create
+  payment-endpoint: https://test-payment.momo.vn/v2/gateway/api/create
+  refund-endpoint: https://test-payment.momo.vn//v2/gateway/api/refund
   partner-code: MOMO
   access-key: F8BBA842ECF85
   secret-key: K951B6PE1waDMi640xX08PD3vg6EkVlz

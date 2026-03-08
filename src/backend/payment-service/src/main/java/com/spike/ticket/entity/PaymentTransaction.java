@@ -4,7 +4,6 @@ import com.spike.ticket.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,7 +23,7 @@ public class PaymentTransaction {
     private String orderTrackingNumber;
 
     @Column(name = "amount", nullable = false)
-    private BigDecimal amount;
+    private Long amount;
 
     @Column(name = "currency", length = 10)
     @Builder.Default

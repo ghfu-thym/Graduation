@@ -3,8 +3,6 @@ package com.spike.ticket.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
-
 @Entity
 @Getter
 @Setter
@@ -28,7 +26,7 @@ public class OrderItem {
     private Long ticketId;
 
     @Column(name = "price", nullable = false, precision = 15, scale = 2)
-    private BigDecimal price;
+    private Long price;
 
 //    @Column(name = "snapshot_event", nullable = false)
 //    private String snapshotEvent;

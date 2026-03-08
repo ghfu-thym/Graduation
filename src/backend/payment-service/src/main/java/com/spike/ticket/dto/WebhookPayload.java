@@ -2,8 +2,6 @@ package com.spike.ticket.dto;
 
 import lombok.*;
 
-import java.math.BigDecimal;
-
 @Builder
 @Getter
 @Setter
@@ -16,7 +14,7 @@ public class WebhookPayload {
 
     private int responseCode;
     private String responseMessage;
-    private BigDecimal amount;
+    private Long amount;
 
     private String signature;
 

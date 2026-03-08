@@ -1,11 +1,13 @@
-package listener;
+package redis;
 
 import com.spike.ticket.client.TicketClient;
 import com.spike.ticket.dto.request.ReleaseTicketRequest;
 import com.spike.ticket.entity.OrderItem;
 import com.spike.ticket.enums.OrderStatus;
+import com.spike.ticket.kafka.publisher.OrderEventPublisher;
 import com.spike.ticket.repository.OrderRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
@@ -16,14 +18,17 @@ import java.util.List;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
 
     private final OrderRepository orderRepository;
     private final TicketClient ticketClient;
-    public OrderTimeOutListener(RedisMessageListenerContainer listenerContainer, OrderRepository orderRepository, TicketClient ticketClient) {
+    private final OrderEventPublisher orderEventPublisher;
+    public OrderTimeOutListener(RedisMessageListenerContainer listenerContainer, OrderRepository orderRepository, TicketClient ticketClient, OrderEventPublisher orderEventPublisher) {
         super(listenerContainer);
         this.orderRepository = orderRepository;
         this.ticketClient = ticketClient;
+        this.orderEventPublisher = orderEventPublisher;
     }
 
     @Override
@@ -58,11 +63,8 @@ public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
                         .toList();
                 if (!ticketIds.isEmpty()){
                     try{
-                        ReleaseTicketRequest request = ReleaseTicketRequest.builder()
-                                .ticketIds(ticketIds)
-                                .orderTrackingNumber(orderTrackingNumber)
-                                .build();
-                        ticketClient.releaseTicket(request);
+                        orderEventPublisher.publishOrderCancelled(orderTrackingNumber, ticketIds);
+                        //ticketClient.releaseTicket(request);
                     } catch (Exception e){
                         log.error("Error releasing tickets for orderID {}, message: {}",orderTrackingNumber, e.getMessage());
                     }

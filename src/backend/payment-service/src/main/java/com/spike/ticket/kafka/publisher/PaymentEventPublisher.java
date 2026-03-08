@@ -1,4 +1,4 @@
-package com.spike.ticket.service;
+package com.spike.ticket.kafka.publisher;
 
 import com.spike.ticket.dto.PaymentSuccessEvent;
 import lombok.extern.slf4j.Slf4j;

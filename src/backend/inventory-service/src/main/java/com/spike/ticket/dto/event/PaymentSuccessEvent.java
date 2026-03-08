@@ -1,4 +1,4 @@
-package com.spike.ticket.dto;
+package com.spike.ticket.dto.event;
 
 public record PaymentSuccessEvent(
         String orderTrackingNumber,

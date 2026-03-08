@@ -1,4 +1,4 @@
-package listener;
+package com.spike.ticket.kafka.listener;
 
 import com.spike.ticket.dto.event.PaymentSuccessEvent;
 import com.spike.ticket.service.OrderService;

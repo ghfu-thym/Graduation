@@ -1,7 +1,9 @@
-package listener;
+package kafka;
 
 import com.spike.ticket.dto.ConfirmTicketRequest;
-import com.spike.ticket.dto.OrderConfirmedEvent;
+import com.spike.ticket.dto.ReleaseTicketRequest;
+import com.spike.ticket.dto.event.OrderCancelledEvent;
+import com.spike.ticket.dto.event.OrderConfirmedEvent;
 import com.spike.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class TicketPaymentListener {
+public class OrderEventListener {
 
     private final TicketService ticketService;
 
@@ -29,6 +31,25 @@ public class TicketPaymentListener {
             log.info("[Kafka listener] Tickets confirmed for order: {}", event.orderTrackingNumber());
         } catch (Exception e) {
             log.error("[Kafka listener] Error confirming tickets for order {}: {}",
+                    event.orderTrackingNumber(), e.getMessage());
+            //TODO: dead letter queue
+        }
+    }
+
+    @KafkaListener(topics = "order-cancelled-events", groupId = "ticket-group")
+    public void handleOrderCancelled(OrderCancelledEvent event) {
+        log.info("[Kafka listener] Received order cancelled event for order: {}",
+                event.orderTrackingNumber());
+
+        try {
+            ReleaseTicketRequest request = new ReleaseTicketRequest();
+            request.setTicketIds(event.ticketIds());
+            request.setOrderTrackingNumber(event.orderTrackingNumber());
+            ticketService.releaseTickets(request);
+            log.info("[Kafka listener] Tickets released for order: {}",
+                    event.orderTrackingNumber());
+        } catch (Exception e) {
+            log.error("[Kafka listener] Error releasing tickets for order {}: {}",
                     event.orderTrackingNumber(), e.getMessage());
             //TODO: dead letter queue
         }

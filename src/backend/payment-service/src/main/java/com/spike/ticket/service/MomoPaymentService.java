@@ -1,5 +1,7 @@
 package com.spike.ticket.service;
 
+import com.spike.ticket.dto.MoMoRefundRequest;
+import com.spike.ticket.dto.MoMoRefundResponse;
 import com.spike.ticket.dto.MomoPaymentRequest;
 import com.spike.ticket.dto.MomoPaymentResponse;
 import com.spike.ticket.utils.HmacUtils;
@@ -15,8 +17,11 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class MomoPaymentService {
-    @Value("${momo.endpoint}")
-    private String endpoint;
+    @Value("${momo.payment-endpoint}")
+    private String paymentEndpoint;
+
+    @Value("${momo.refund-endpoint}")
+    private String refundEndpoint;
 
     @Value("${momo.partner-code}")
     private String partnerCode;
@@ -53,9 +58,6 @@ public class MomoPaymentService {
                 "&requestId="+requestId+
                 "&requestType="+requestType;
 
-        System.out.println("=== CHUỖI CỦA MOMO ===");
-        System.out.println("accessKey=klm05TvNCzjfasWj&amount=50000&extraData=&ipnUrl=" + ipnUrl + "&orderId=" + orderTrackingNumber + "&orderInfo=" + orderInfo + "&partnerCode=MOMOBKUN20180529&redirectUrl=" + redirectUrl + "&requestId=" + requestId + "&requestType=captureWallet");
-        System.out.println("=== CHUỖI CỦA BẠN ===");
         System.out.println(rawData);
         String signature = HmacUtils.signHmacSha256(rawData, secretKey);
 
@@ -77,7 +79,7 @@ public class MomoPaymentService {
         try {
             log.info("Sending payment request to Momo: {}", request);
             MomoPaymentResponse response = momoRestClient.post()
-                    .uri(endpoint)
+                    .uri(paymentEndpoint)
                     .body(request)
                     .retrieve()
                     .body(MomoPaymentResponse.class);
@@ -92,5 +94,40 @@ public class MomoPaymentService {
             log.error("Error to connect to momo api {}", e.getMessage());
             throw new RuntimeException("Error payment gateway: " + e.getMessage());
         }
+    }
+
+    public MoMoRefundResponse refundPayment(String originalOrderId,String transactionId, Long amount){
+        Long transId = Long.parseLong(transactionId);
+        String requestId = UUID.randomUUID().toString();
+
+        String refundOrderId = "RF_" + originalOrderId + "_" + System.currentTimeMillis();
+        String description = "Refund for order: " + originalOrderId;
+        String rawSignature = "accessKey=" + accessKey +
+                "&amount=" + amount +
+                "&description=" + description +
+                "&orderId=" + refundOrderId +
+                "&partnerCode=" + partnerCode +
+                "&requestId=" + requestId +
+                "&transId=" + transId;
+        String signature = HmacUtils.signHmacSha256(rawSignature, secretKey);
+
+        MoMoRefundRequest request = new MoMoRefundRequest(
+                partnerCode,
+                refundOrderId,
+                requestId,
+                amount,
+                transId,
+                "vi",
+                description,
+                signature
+        );
+
+        MoMoRefundResponse response = momoRestClient.post()
+                .uri(refundEndpoint)
+                .body(request)
+                .retrieve()
+                .body(MoMoRefundResponse.class);
+
+        return response;
     }
 }
