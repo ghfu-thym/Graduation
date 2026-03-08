@@ -20,6 +20,7 @@ public class WebhookService {
     private final PaymentTransactionRepository paymentRepo;
     private final StringRedisTemplate redisTemplate;
     private final OrderClient orderClient; // Feign client gọi sang order-service
+    private final PaymentEventPublisher paymentEventPublisher;
 
     @Transactional
     public void processWebhook(WebhookPayload payload) {
@@ -54,7 +55,8 @@ public class WebhookService {
 
                 log.info("Order {} is paid successfully. Call to order-service", orderTrackingNumber);
 
-                orderClient.confirmOrderPaid(orderTrackingNumber);
+                //orderClient.confirmOrderPaid(orderTrackingNumber);
+                paymentEventPublisher.publish(orderTrackingNumber, payload.getProviderTransactionId(), payload.getAmount().longValue());
             } else {
                 //khi thanh toán thất bại
                 transaction.setStatus(PaymentStatus.FAILED);

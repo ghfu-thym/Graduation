@@ -1,7 +1,6 @@
 package com.spike.ticket.service.implement;
 
 import com.spike.ticket.client.TicketClient;
-import com.spike.ticket.dto.request.ConfirmTicketRequest;
 import com.spike.ticket.dto.request.CreateOrderRequest;
 import com.spike.ticket.dto.request.ReserveTicketRequest;
 import com.spike.ticket.dto.respone.OrderResponse;
@@ -11,6 +10,7 @@ import com.spike.ticket.entity.OrderItem;
 import com.spike.ticket.enums.OrderStatus;
 import com.spike.ticket.mapper.OrderMapper;
 import com.spike.ticket.repository.OrderRepository;
+import com.spike.ticket.service.OrderEventPublisher;
 import com.spike.ticket.service.OrderService;
 import feign.FeignException;
 import jakarta.transaction.Transactional;
@@ -38,6 +38,7 @@ public class OrderServiceImpl  implements OrderService {
     private final OrderMapper orderMapper;
     private final StringRedisTemplate redisTemplate;
     private final TicketClient ticketClient;
+    private final OrderEventPublisher orderEventPublisher;
     @Override
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -140,15 +141,15 @@ public class OrderServiceImpl  implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse completePayment(String orderTrackingNumber, String txnId) {
+    public void completePayment(String orderTrackingNumber, String txnId) {
 
-        // lưu order đã được thanh toán
         Order order = orderRepository.findByOrderTrackingNumber(orderTrackingNumber).orElseThrow(
                 () ->new RuntimeException("Order not found for tracking number: "+orderTrackingNumber)
         );
 
         if (order.getStatus() == OrderStatus.PAID){
-            return orderMapper.toOrderResponse(order);
+            log.info("Order {} already paid, skipping.", orderTrackingNumber);
+            return;
         }
 
         if (order.getStatus() != OrderStatus.PENDING){
@@ -157,23 +158,18 @@ public class OrderServiceImpl  implements OrderService {
 
         order.setStatus(OrderStatus.PAID);
         order.setTxnId(txnId);
-        Order savedOrder = orderRepository.save(order);
+        orderRepository.save(order);
 
-        // xóa redis
+        // xóa redis
         redisTemplate.delete("order_timeout:" + orderTrackingNumber);
 
-        //gọi tới inventory service chuyển vé sang SOLD
-        List<Long> ticketIds = savedOrder.getOrderItems().stream()
+        // publish Kafka event để inventory service chuyển vé sang SOLD
+        List<Long> ticketIds = order.getOrderItems().stream()
                 .map(OrderItem::getTicketId)
                 .toList();
-        ConfirmTicketRequest confirmTicketRequest = new ConfirmTicketRequest();
-        confirmTicketRequest.setTicketIds(ticketIds);
-        confirmTicketRequest.setOrderTrackingNumber(orderTrackingNumber);
-        ticketClient.confirmTicket(confirmTicketRequest);
+        orderEventPublisher.publishOrderConfirmed(orderTrackingNumber, ticketIds);
 
         //TODO: message to notification service
-
-        return orderMapper.toOrderResponse(savedOrder);
     }
 
 
@@ -221,5 +217,4 @@ public class OrderServiceImpl  implements OrderService {
         return true;
     }
 }
-
 

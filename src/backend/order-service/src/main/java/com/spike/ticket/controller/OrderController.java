@@ -64,14 +64,14 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    // giữ lại nếu sau này kafka chết thì gọi thẳng
     @PutMapping("/{orderTrackingNumber}/confirm-payment")
-    public ResponseEntity<OrderResponse> confirmOrderPaid(
+    public ResponseEntity<Void> confirmOrderPaid(
             @PathVariable String orderTrackingNumber,
             @RequestBody PaymentConfirmationRequest request){
 
         log.info("Pay order with ID: {}", orderTrackingNumber);
-        // transactionId = txnId
-        OrderResponse orderResponse = orderService.completePayment(orderTrackingNumber, request.transactionId());
-        return ResponseEntity.ok(orderResponse);
+        orderService.completePayment(orderTrackingNumber, request.transactionId());
+        return ResponseEntity.ok().build();
     }
 }
