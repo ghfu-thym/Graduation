@@ -18,7 +18,6 @@ import java.util.List;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
 
     private final OrderRepository orderRepository;

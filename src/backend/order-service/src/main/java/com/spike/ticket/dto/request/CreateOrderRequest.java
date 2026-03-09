@@ -7,8 +7,7 @@ import java.util.List;
 
 @Data
 public class CreateOrderRequest {
-    @NotNull(message = "userId cannot be null")
-    private Long userId;
+
 
     @NotNull(message = "eventId cannot be null")
     private Long eventId;

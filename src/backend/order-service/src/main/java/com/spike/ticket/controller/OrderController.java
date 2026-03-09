@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,10 +22,13 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        log.info("Create order request for user: {}", request.getUserId());
+    public ResponseEntity<OrderResponse> createOrder(
+            @Valid @RequestBody CreateOrderRequest request,
+            JwtAuthenticationToken auth) {
+        Long userId = Long.parseLong(auth.getToken().getSubject());
+        log.info("Create order request for user: {}", userId);
 
-        OrderResponse orderResponse = orderService.createOrder(request);
+        OrderResponse orderResponse = orderService.createOrder(request, userId);
 
         return new ResponseEntity<>(orderResponse, HttpStatus.CREATED);
     }
@@ -49,13 +53,14 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getOrdersByUserID(
-            @RequestParam Long userID,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            JwtAuthenticationToken auth
     ){
-        log.info("Get orders by user ID: {}", userID);
+        Long userId = Long.parseLong(auth.getToken().getSubject());
+        log.info("Get orders by user ID: {}", userId);
 
-        Page<OrderResponse> response = orderService.getOrdersByUserID(userID, page, size);
+        Page<OrderResponse> response = orderService.getOrdersByUserID(userId, page, size);
 
         if (response.isEmpty()){
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);

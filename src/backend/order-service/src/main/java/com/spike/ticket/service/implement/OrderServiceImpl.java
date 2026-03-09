@@ -40,8 +40,8 @@ public class OrderServiceImpl  implements OrderService {
     private final OrderEventPublisher orderEventPublisher;
     @Override
     @Transactional
-    public OrderResponse createOrder(CreateOrderRequest request) {
-        log.info("Create order request for user: {}", request.getUserId());
+    public OrderResponse createOrder(CreateOrderRequest request, Long userId) {
+        log.info("Create order request for user: {}", userId);
 
         ReserveTicketRequest ticketRequest = new ReserveTicketRequest();
         ticketRequest.setEventID(request.getEventId());
@@ -60,7 +60,7 @@ public class OrderServiceImpl  implements OrderService {
 
         Order order = new Order();
         order.setOrderTrackingNumber(UUID.randomUUID().toString());
-        order.setUserId(request.getUserId());
+        order.setUserId(userId);
         order.setStatus(OrderStatus.PENDING);
         order.setTotalAmount(request.getTotalPrice());
 

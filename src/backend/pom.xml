@@ -11,7 +11,7 @@
     <modules>
         <module>event-service</module>
         <module>checkin-service</module>
-        <module>identity-service</module>
+        <module>auth-service</module>
         <module>inventory-service</module>
         <module>notification-service</module>
         <module>order-service</module>

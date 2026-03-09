@@ -1,4 +1,4 @@
-package kafka;
+package com.spike.ticket.kafka;
 
 import com.spike.ticket.dto.ConfirmTicketRequest;
 import com.spike.ticket.dto.ReleaseTicketRequest;
