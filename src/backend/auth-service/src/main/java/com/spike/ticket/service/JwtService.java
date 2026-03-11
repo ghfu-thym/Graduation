@@ -1,5 +1,6 @@
 package com.spike.ticket.service;
 
+import com.spike.ticket.entity.User;
 import com.spike.ticket.utils.RsaKeyReader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -17,16 +18,17 @@ public class JwtService {
     // 1 ngày
     private static final Long EXPIRATION_TIME = 86400000L;
 
-    public String generateToken(Long userId) {
+    public String generateToken(User user) {
         try {
             PrivateKey privateKey = rsaKeyReader.getPrivateKey();
 
             return Jwts.builder()
-                    // Chỉ nhét đúng userId vào để tối ưu kích thước token cho hệ thống tải cao
-                    .setSubject(String.valueOf(userId))
+                    // nhét system role và userId
+                    .setSubject(String.valueOf(user.getId()))
+                    .claim("role",user.getRole().toString() )
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                    .signWith(privateKey, SignatureAlgorithm.RS256) // Dùng thuật toán RS256
+                    .signWith(privateKey, SignatureAlgorithm.RS256)
                     .compact();
 
         } catch (Exception e) {

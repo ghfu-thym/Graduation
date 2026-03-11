@@ -1,6 +1,7 @@
 package com.spike.ticket.entity;
 
 
+import com.spike.ticket.enums.SystemRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,6 +28,10 @@ public class User {
 
     @Column(name = "email", unique = true, nullable = false, length = 50)
     private String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column
+    private SystemRole role;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

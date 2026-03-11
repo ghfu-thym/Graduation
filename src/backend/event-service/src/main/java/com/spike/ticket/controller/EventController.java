@@ -51,7 +51,7 @@ public class EventController {
         return String.format("%d Inspectors added to event", userIds.size());
     }
 
-    @PreAuthorize("@eventAuth.isAdmin(authentication)")
+    @PreAuthorize("hasAnyAuthority('ADMIN')")
     @PostMapping("{eventId}/publish")
     public ResponseEntity<Void> publishEvent(@PathVariable Long eventId) {
         eventService.publishEvent(eventId);

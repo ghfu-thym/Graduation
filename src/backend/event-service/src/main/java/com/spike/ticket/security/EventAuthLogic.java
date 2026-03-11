@@ -32,11 +32,4 @@ public class EventAuthLogic {
         Long userId = Long.parseLong(auth.getToken().getSubject());
         return eventMemberRepository.existsByUserIdAndEventId(eventId, userId, EventRole.ATTENDEE);
     }
-
-    public boolean isAdmin(JwtAuthenticationToken auth) {
-        if (auth == null) return false;
-        Long userId = Long.parseLong(auth.getToken().getSubject());
-
-
-    }
 }
