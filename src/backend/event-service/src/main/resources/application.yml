@@ -1,0 +1,69 @@
+server:
+  port: 8084
+spring:
+  application:
+    name: event-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Chỉ đường tới file public key
+          public-key-location: classpath:public_key.pem
+  datasource:
+    # URL kết nối MySQL.
+    # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có (Tiện lợi)
+    # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
+    # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
+    url: jdbc:mysql://localhost:3306/event_service?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: root
+    password: 3307a001
+
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    # open-in-view: false (Best practice)
+    # Tắt việc giữ connection tới view layer, giúp tăng hiệu năng cho DB
+    open-in-view: false
+
+    hibernate:
+      # ddl-auto: update
+      # Tự động so sánh Entity và DB:
+      # - Nếu bảng chưa có -> Tự tạo.
+      # - Nếu thiếu cột -> Tự thêm.
+      # (Rất tiện cho giai đoạn code Khóa luận)
+      ddl-auto: update
+
+    # In câu SQL ra console để bạn debug xem Hibernate đang làm gì
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true # Format câu SQL cho đẹp dễ nhìn
+        dialect: org.hibernate.dialect.MySQLDialect
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: event-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 25MB
+
+# Thư mục lưu ảnh upload
+app:
+  upload:
+    dir: uploads/events
+
+# Cấu hình logging để dễ nhìn lỗi
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Xem giá trị tham số ? trong câu SQL
