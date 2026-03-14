@@ -22,15 +22,16 @@ public class OrderItem {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @Column(name = "ticket_id", nullable = false)
-    private Long ticketId;
+    @Column(name = "category_id", nullable = false)
+    private Long categoryId;
 
-    @Column(name = "price", nullable = false, precision = 15, scale = 2)
-    private Long price;
+    @Column
+    private String name;
 
-//    @Column(name = "snapshot_event", nullable = false)
-//    private String snapshotEvent;
-//
-//    @Column(name = "snapshot_seat", nullable = false, length = 100)
-//    private String snapshotSeat;
+    @Column(name = "price_per_ticket", nullable = false, precision = 15, scale = 2)
+    private Long pricePerTicket;
+
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+
 }

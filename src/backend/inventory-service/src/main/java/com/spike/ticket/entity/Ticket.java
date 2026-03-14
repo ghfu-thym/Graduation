@@ -20,6 +20,9 @@ public class Ticket {
     @Column(name = "ticket_number", nullable = false)
     private String ticketNumber;
 
+    @Column
+    private String name;
+
     @Column(name = "event_id", nullable = false)
     private Long eventId;
 

@@ -39,6 +39,12 @@ public class Event {
     @Column
     private EventStatus status;
 
+    @Column
+    private LocalDateTime ticketOpenTime;
+
+    @Column
+    private Boolean isOpened;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

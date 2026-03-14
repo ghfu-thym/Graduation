@@ -1,7 +1,11 @@
 package redis;
 
 import com.spike.ticket.client.TicketClient;
+import com.spike.ticket.dto.event.CategoryItem;
+import com.spike.ticket.dto.event.OrderCancelledEvent;
+import com.spike.ticket.dto.event.OrderConfirmedEvent;
 import com.spike.ticket.dto.request.ReleaseTicketRequest;
+import com.spike.ticket.entity.Order;
 import com.spike.ticket.entity.OrderItem;
 import com.spike.ticket.enums.OrderStatus;
 import com.spike.ticket.kafka.publisher.OrderEventPublisher;
@@ -14,6 +18,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -56,21 +61,31 @@ public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
 
                 log.info("Order with tracking number: {} is changed to timeout!", orderTrackingNumber);
 
-
-                List<Long> ticketIds = order.getOrderItems().stream()
-                        .map(OrderItem::getTicketId)
-                        .toList();
-                if (!ticketIds.isEmpty()){
                     try{
-                        orderEventPublisher.publishOrderCancelled(orderTrackingNumber, ticketIds);
+                        orderEventPublisher.publishOrderCancelled(mapToOrderCancelledEvent(order));
                         //ticketClient.releaseTicket(request);
                     } catch (Exception e){
                         log.error("Error releasing tickets for orderID {}, message: {}",orderTrackingNumber, e.getMessage());
                     }
-                }
             } else {
                 log.info("Order {} cannot be changed to timeout! Current status:{}", orderTrackingNumber, order.getStatus());
             }
         });
+    }
+
+    private OrderCancelledEvent mapToOrderCancelledEvent(Order order) {
+        List<OrderItem> orderItemList = order.getOrderItems();
+        List<CategoryItem> categoryItems = new ArrayList<>();
+        for (OrderItem orderItem : orderItemList) {
+            CategoryItem tmp = new CategoryItem(
+                    orderItem.getCategoryId(),
+                    orderItem.getQuantity()
+            );
+            categoryItems.add(tmp);
+        }
+        return new OrderCancelledEvent(
+                order.getOrderTrackingNumber(),
+                categoryItems
+        );
     }
 }

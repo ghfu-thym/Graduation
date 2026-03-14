@@ -1,6 +1,7 @@
 package com.spike.ticket.controller;
 
 import com.spike.ticket.dto.CreateEventRequest;
+import com.spike.ticket.dto.CreateTicketRequest;
 import com.spike.ticket.dto.EventResponse;
 import com.spike.ticket.service.EventService;
 import jakarta.validation.Valid;
@@ -55,6 +56,16 @@ public class EventController {
     @PostMapping("{eventId}/publish")
     public ResponseEntity<Void> publishEvent(@PathVariable Long eventId) {
         eventService.publishEvent(eventId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("@eventAuth.isOrganizer(#eventId, authentication)")
+    @PutMapping("/{eventId}/ticket-categoties")
+    public ResponseEntity<?> syncTicketCategory(
+            @PathVariable Long eventId,
+            @Valid @RequestBody CreateTicketRequest request) {
+        eventService.syncTicketCategory(eventId, request);
 
         return ResponseEntity.ok().build();
     }

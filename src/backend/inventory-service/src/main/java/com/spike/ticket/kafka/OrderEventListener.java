@@ -19,13 +19,13 @@ public class OrderEventListener {
 
     @KafkaListener(topics = "order-confirmed-events", groupId = "ticket-group")
     public void handleOrderConfirmed(OrderConfirmedEvent event) {
-        log.info("[Kafka listener] Received order confirmed event for order: {}, ticketIds: {}",
-                event.orderTrackingNumber(), event.ticketIds());
+        log.info("[Kafka listener] Received order confirmed event for order: {}, categoryItems: {}",
+                event.orderTrackingNumber(), event.categoryItems());
 
         try {
             // tận dụng lại DTO từ lúc dùng feign để
             ConfirmTicketRequest request = new ConfirmTicketRequest();
-            request.setTicketIds(event.ticketIds());
+            request.setCategoryItemList(event.categoryItems());
             request.setOrderTrackingNumber(event.orderTrackingNumber());
             ticketService.confirmTickets(request);
             log.info("[Kafka listener] Tickets confirmed for order: {}", event.orderTrackingNumber());
@@ -43,7 +43,7 @@ public class OrderEventListener {
 
         try {
             ReleaseTicketRequest request = new ReleaseTicketRequest();
-            request.setTicketIds(event.ticketIds());
+            request.setCategoryItems(event.categoryItems());
             request.setOrderTrackingNumber(event.orderTrackingNumber());
             ticketService.releaseTickets(request);
             log.info("[Kafka listener] Tickets released for order: {}",

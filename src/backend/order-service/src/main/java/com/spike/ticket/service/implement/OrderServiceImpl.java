@@ -1,6 +1,12 @@
 package com.spike.ticket.service.implement;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spike.ticket.client.TicketClient;
+import com.spike.ticket.dto.TicketMetadata;
+import com.spike.ticket.dto.event.CategoryItem;
+import com.spike.ticket.dto.event.OrderConfirmedEvent;
 import com.spike.ticket.dto.request.CreateOrderRequest;
 import com.spike.ticket.dto.request.ReserveTicketRequest;
 import com.spike.ticket.dto.respone.OrderResponse;
@@ -16,6 +22,7 @@ import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,51 +45,80 @@ public class OrderServiceImpl  implements OrderService {
     private final StringRedisTemplate redisTemplate;
     private final TicketClient ticketClient;
     private final OrderEventPublisher orderEventPublisher;
+    private final ObjectMapper objectMapper;
+
     @Override
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, Long userId) {
-        log.info("Create order request for user: {}", userId);
 
-        ReserveTicketRequest ticketRequest = new ReserveTicketRequest();
-        ticketRequest.setEventID(request.getEventId());
-        ticketRequest.setTicketIds(request.getTicketIds());
-        ticketRequest.setTicketType(request.getTicketType());
-        ticketRequest.setQuantity(request.getQuantity());
-
-
-        List<TicketReservationResponse> reservedTickets;
-        try {
-            reservedTickets = ticketClient.reserveTicket(ticketRequest);
-        } catch (FeignException.Conflict e){
-            throw new RuntimeException("Failed to reserve tickets:");
-        }
-
-
-        Order order = new Order();
-        order.setOrderTrackingNumber(UUID.randomUUID().toString());
-        order.setUserId(userId);
-        order.setStatus(OrderStatus.PENDING);
-        order.setTotalAmount(request.getTotalPrice());
-
-
+        // tạo trước thông tin order, request giữ vé thành công sẽ lưu order xuống db
         Long totalAmount = 0L;
         List<OrderItem> orderItems = new ArrayList<>();
 
+        Order order = new Order();
+        order.setUserId(userId);
+        order.setOrderTrackingNumber(UUID.randomUUID().toString());
+        order.setStatus(OrderStatus.PENDING);
 
-        for(TicketReservationResponse ticket : reservedTickets){
-            OrderItem item = OrderItem.builder()
-                    .order(order)
-                    .ticketId(ticket.getTicketId())
-                    .price(ticket.getPrice())
-                    .build();
-            orderItems.add(item);
-            totalAmount += ticket.getPrice();
+        for (CategoryItem item : request.getCategoryItems()) {
+            String redisKey = "ticket:category:" + item.getTicketCategoryId() + ":metadata";
+            String jsonMetadata = redisTemplate.opsForValue().get(redisKey);
+
+            if (jsonMetadata == null) {
+                throw new RuntimeException("Ticket metadata not found for category ID: " + item.getTicketCategoryId());
+            }
+
+            TicketMetadata metadata;
+
+            try {
+                metadata = objectMapper.readValue(jsonMetadata, TicketMetadata.class);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+            Long price = metadata.getPrice()*(item.getQuantity());
+            totalAmount += price;
+
+            order.setEventId(metadata.getEventId());
+            order.setEventName(metadata.getEventName());
+            order.setBannerUrl(metadata.getBannerUrl());
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setCategoryId(metadata.getCategoryId());
+            orderItem.setPricePerTicket(metadata.getPrice());
+            orderItem.setQuantity(item.getQuantity());
+
+            orderItems.add(orderItem);
+
+
+        }
+        order.setTotalAmount(totalAmount);
+        order.setOrderItems(orderItems);
+
+        //tạo request sang cho Inventory Service
+        ReserveTicketRequest ticketRequest = new ReserveTicketRequest();
+        ticketRequest.setEventID(request.getEventId());
+        ticketRequest.setTicketCategories(request.getCategoryItems());
+
+
+        TicketReservationResponse result = TicketReservationResponse.builder()
+                .success(false)
+                .build();
+        try{
+            result = ticketClient.reserveTicket(ticketRequest);
+        } catch (FeignException.Conflict e){
+            throw new RuntimeException("Failed in feign call to inventory service:");
         }
 
-        order.setOrderItems(orderItems);
-        order.setTotalAmount(totalAmount);
+        if(!result.isSuccess()){
+            Long index = result.getFailedCategoryIndex();
+            OrderItem failedOrderItem = orderItems.get(index.intValue() - 1);
+            String name = failedOrderItem.getName();
+            throw new RuntimeException("Failed to reserve tickets: " + name);
+        }
+
         Order savedOrder = orderRepository.save(order);
-        log.info("Order saved with tracking number: {}", savedOrder.getOrderTrackingNumber());
 
         String redisKey = "order_timeout:"+savedOrder.getOrderTrackingNumber();
 
@@ -157,9 +193,6 @@ public class OrderServiceImpl  implements OrderService {
             return;
         }
 
-        if (order.getStatus() != OrderStatus.PENDING){
-            throw new RuntimeException("Order is unavailable to be paid!");
-        }
 
         order.setStatus(OrderStatus.PAID);
         order.setTxnId(txnId);
@@ -169,10 +202,8 @@ public class OrderServiceImpl  implements OrderService {
         redisTemplate.delete("order_timeout:" + orderTrackingNumber);
 
         // publish Kafka event để inventory service chuyển vé sang SOLD
-        List<Long> ticketIds = order.getOrderItems().stream()
-                .map(OrderItem::getTicketId)
-                .toList();
-        orderEventPublisher.publishOrderConfirmed(orderTrackingNumber, ticketIds);
+        OrderConfirmedEvent event = mapToOrderConfirmedEvent(order);
+        orderEventPublisher.publishOrderConfirmed(event);
 
         //TODO: message to notification service
     }
@@ -190,36 +221,21 @@ public class OrderServiceImpl  implements OrderService {
                 .createdAt(order.getCreatedAt())
                 .build();
     }
-    /**
-     * Giả lập việc gọi sang Inventory Service để kiểm tra ghế.
-     * Logic:
-     * 1. Tạm dừng 50-100ms để mô phỏng Network Latency (Quan trọng cho High Concurrency test).
-     * 2. Nếu trong list có ghế ID = 999 (ví dụ) -> Trả về False (để test case thất bại).
-     * 3. Còn lại trả về True.
-     */
-    private boolean mockCheckSeatAvailability(java.util.List<Long> seatIds) {
-        log.info("Mocking request to Inventory Service to check seats: {}", seatIds);
 
-        try {
-            // Giả lập độ trễ mạng (Network Latency)
-            // Trong thực tế, gọi sang service khác mất tầm 30ms - 200ms
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Thread interrupted while mocking network call", e);
+    private OrderConfirmedEvent mapToOrderConfirmedEvent(Order order) {
+        List<OrderItem> orderItemList = order.getOrderItems();
+        List<CategoryItem> categoryItems = new ArrayList<>();
+        for (OrderItem orderItem : orderItemList) {
+            CategoryItem tmp = new CategoryItem(
+                    orderItem.getCategoryId(),
+                    orderItem.getQuantity()
+            );
+            categoryItems.add(tmp);
         }
-
-        // GIẢ LẬP LỖI (Để bạn test trường hợp mua thất bại)
-        // Quy ước: Nếu user chọn ghế số 999 hoặc số âm -> Báo là ghế đã hết
-        for (Long id : seatIds) {
-            if (id < 0 || id == 999) {
-                log.warn("Mock: Seat ID {} is already taken or invalid!", id);
-                return false; // Ghế không khả dụng
-            }
-        }
-
-        // Mặc định là ghế trống
-        return true;
+        return new OrderConfirmedEvent(
+                order.getOrderTrackingNumber(),
+                categoryItems
+        );
     }
 }
 

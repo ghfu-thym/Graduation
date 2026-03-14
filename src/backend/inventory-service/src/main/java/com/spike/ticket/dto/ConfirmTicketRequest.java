@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 public class ConfirmTicketRequest {
-    private List<Long> ticketIds;
+    private List<CategoryItem> categoryItemList;
     private String orderTrackingNumber;
 }
 

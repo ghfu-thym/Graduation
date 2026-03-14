@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("api/v1/tickets")
 @RequiredArgsConstructor
@@ -22,12 +20,12 @@ public class InventoryController {
     private final TicketService ticketService;
 
     @PostMapping("/reserve")
-    public ResponseEntity<?> reserveTickets(@RequestBody ReserveTicketRequest request){
+    public ResponseEntity<TicketReservationResponse> reserveTickets(@RequestBody ReserveTicketRequest request){
         try {
-            List<TicketReservationResponse> reservedTicketIds = ticketService.reserveTickets(request);
-            return ResponseEntity.ok(reservedTicketIds);
+
+            return ResponseEntity.ok(ticketService.reserveTicket(request));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
         }
     }
 

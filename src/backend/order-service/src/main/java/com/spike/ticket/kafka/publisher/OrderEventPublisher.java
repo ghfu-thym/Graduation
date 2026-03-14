@@ -23,16 +23,16 @@ public class OrderEventPublisher {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void publishOrderConfirmed(String orderTrackingNumber, List<Long> ticketIds) {
-        OrderConfirmedEvent event = new OrderConfirmedEvent(orderTrackingNumber, ticketIds);
-        kafkaTemplate.send(TOPIC_ORDER_CONFIRMED, orderTrackingNumber, event);
-        log.info("[Kafka] Order confirmed event published for order: {}, ticketIds: {}", orderTrackingNumber, ticketIds);
+    public void publishOrderConfirmed(OrderConfirmedEvent event) {
+
+        kafkaTemplate.send(TOPIC_ORDER_CONFIRMED, event.orderTrackingNumber(), event);
+        log.info("[Kafka] Order confirmed event published for order: {}, categoryItems: {}", event.orderTrackingNumber(), event.categoryItems());
     }
 
-    public void publishOrderCancelled(String orderTrackingNumber, List<Long> ticketIds) {
-        OrderCancelledEvent event = new OrderCancelledEvent(orderTrackingNumber, ticketIds);
-        kafkaTemplate.send(TOPIC_ORDER_CANCELLED, orderTrackingNumber, event );
-        log.info("[Kafka] Order cancelled event published for order: {}", orderTrackingNumber);
+    public void publishOrderCancelled(OrderCancelledEvent event) {
+
+        kafkaTemplate.send(TOPIC_ORDER_CANCELLED, event.orderTrackingNumber(), event );
+        log.info("[Kafka] Order cancelled event published for order: {}", event.orderTrackingNumber());
     }
 
     public void publishRefundOrder(String orderTrackingNumber, Long amount){

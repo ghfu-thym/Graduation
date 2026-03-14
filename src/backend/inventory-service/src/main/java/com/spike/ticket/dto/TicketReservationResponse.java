@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TicketReservationResponse {
-    private Long ticketId;
-    private Long price;
+    private boolean success;
+    private Long failedCategoryIndex;
 }

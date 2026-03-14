@@ -4,6 +4,7 @@ package com.spike.ticket.service;
 import com.spike.ticket.dto.LoginRequest;
 import com.spike.ticket.dto.RegisterRequest;
 import com.spike.ticket.entity.User;
+import com.spike.ticket.enums.SystemRole;
 import com.spike.ticket.repository.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +33,7 @@ public class AuthService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(encodedPassword)
+                .role(SystemRole.USER)
                 .build();
 
         userRepo.save(user);

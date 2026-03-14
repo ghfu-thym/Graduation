@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReleaseTicketRequest {
-    private List<Long> ticketIds;
+    private List<CategoryItem> categoryItems;
 
     private String orderTrackingNumber;
 }

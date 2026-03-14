@@ -33,8 +33,17 @@ public class Order {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "event_id", nullable = false)
+    private Long eventId;
+
+    @Column(name = "event_name", nullable = false)
+    private String eventName;
+
     @Column(name = "total_price", nullable = false, precision = 15, scale = 2)
     private Long totalAmount;
+
+    @Column
+    private String bannerUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)

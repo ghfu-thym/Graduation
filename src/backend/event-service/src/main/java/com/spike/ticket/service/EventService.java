@@ -1,15 +1,19 @@
 package com.spike.ticket.service;
 
 import com.spike.ticket.dto.CreateEventRequest;
+import com.spike.ticket.dto.CreateTicketRequest;
 import com.spike.ticket.dto.EventResponse;
 import com.spike.ticket.entity.Event;
 import com.spike.ticket.entity.EventImage;
 import com.spike.ticket.entity.EventMember;
+import com.spike.ticket.entity.TicketCategory;
 import com.spike.ticket.enums.EventRole;
 import com.spike.ticket.enums.EventStatus;
+import com.spike.ticket.kafka.EventServicePublisher;
 import com.spike.ticket.repository.EventImageRepository;
 import com.spike.ticket.repository.EventMemberRepository;
 import com.spike.ticket.repository.EventRepository;
+import com.spike.ticket.repository.TicketCategoryRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +30,8 @@ public class EventService {
     private final EventMemberRepository eventMemberRepository;
     private final EventImageRepository eventImageRepository;
     private final FileStorageService fileStorageService;
+    private final EventServicePublisher eventServicePublisher;
+    private final TicketCategoryRepo ticketCategoryRepo;
 
     @Transactional
     public EventResponse createEvent(Long creatorId, CreateEventRequest request) {
@@ -86,6 +92,24 @@ public class EventService {
         }
     }
 
+    @Transactional
+    public void syncTicketCategory(Long eventId, CreateTicketRequest request){
+
+        Event event = eventRepository.findById(eventId).orElseThrow(
+                () -> new IllegalArgumentException("Event not found")
+        );
+
+        if (event.getStatus() != EventStatus.DRAFT) {
+            throw new IllegalArgumentException("Event is not in draft status");
+        }
+
+        ticketCategoryRepo.deleteByEventId(eventId);
+
+        ticketCategoryRepo.saveAll(request.getTicketCategories());
+
+    }
+
+    @Transactional // nếu kafka fail thì roll back
     public void publishEvent(Long eventId) {
         Event event = eventRepository.findByEventId(eventId);
         if (event == null) {
@@ -95,10 +119,20 @@ public class EventService {
             return;
         }
 
+
+
+        List<TicketCategory> ticketCategories = ticketCategoryRepo.findByEventId(eventId);
+        if (ticketCategories.isEmpty()) {
+            throw new IllegalArgumentException("Event has no ticket categories");
+        }
+
         event.setStatus(EventStatus.PUBLISHED);
 
-        //TODO: do something that user can see event on web
 
+
+        eventServicePublisher.publishEventApproved(eventId,ticketCategories);
+
+        //TODO: do something that user can see event on web
 
         eventRepository.save(event);
     }

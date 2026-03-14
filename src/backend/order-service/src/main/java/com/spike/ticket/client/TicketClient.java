@@ -13,7 +13,7 @@ import java.util.List;
 @FeignClient(name = "ticket-service", url = "http://localhost:8081")
 public interface TicketClient {
     @PostMapping("/api/v1/tickets/reserve")
-    List<TicketReservationResponse> reserveTicket(@RequestBody ReserveTicketRequest request);
+    TicketReservationResponse reserveTicket(@RequestBody ReserveTicketRequest request);
 
     @PostMapping("/api/v1/tickets/release")
     void releaseTicket(@RequestBody ReleaseTicketRequest request);

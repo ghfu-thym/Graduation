@@ -1,4 +1,8 @@
+/**
+ * lưu thông tin vé từ message
+ */
 package com.spike.ticket.entity;
+
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,18 +19,15 @@ public class TicketCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "event_id", nullable = false)
-    private Long eventId;
-
-    @Column(name = "name", nullable = false)
+    @Column
     private String name;
 
-    @Column(name = "price", nullable = false)
+    @Column
     private Long price;
 
-    @Column(name = "quantity", nullable = false)
+    @Column
     private Integer quantity;
 
-    @Column(name = "description", length = 500)
-    private String description;
+    @Column
+    private Long eventId;
 }
