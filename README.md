@@ -11,19 +11,19 @@ Hệ thống bán vé sự kiện trực tuyến được thiết kế chuyên b
 
 Vấn đề lớn nhất của các hệ thống bán vé thông thường là sự cố sập server và lỗi vượt quá số lượng vé (overselling) khi hàng trăm ngàn người dùng truy cập cùng lúc. Dự án này giải quyết bài toán đó bằng cách áp dụng **Kiến trúc Vi dịch vụ (Microservices)** và cơ chế **Phòng chờ ảo (Virtual Waiting Room)**, đảm bảo hệ thống luôn hoạt động ổn định, công bằng và toàn vẹn dữ liệu.
 
-## ✨ Tính năng nổi bật (Key Features)
+## ✨ Tính năng nổi bật
 * **Virtual Waiting Room (Phòng chờ ảo):** Sử dụng để quản lý hàng đợi người dùng. Thay vì đẩy trực tiếp toàn bộ request vào Database, hệ thống sẽ phân luồng và cấp quyền truy cập tuần tự, bảo vệ hệ thống khỏi tình trạng quá tải (Bottleneck).
 * **Microservices Architecture:** Hệ thống được chia nhỏ thành các services độc lập (User Service, Ticket Service, Order Service, Payment Service...), giúp dễ dàng mở rộng theo chiều ngang khi lưu lượng tăng cao.
 * **Concurrency Control (Kiểm soát đồng thời):** Xử lý triệt để tình trạng Race Condition, đảm bảo tính nhất quán của dữ liệu (ACID) trong quá trình giao dịch, không để xảy ra tình trạng bán số lượng vé nhiều hơn thực tế.
 * **Cloud Deployment:** Triển khai hạ tầng và các dịch vụ trên nền tảng đám mây AWS để tối ưu hiệu năng và đảm bảo tính sẵn sàng cao (High Availability).
 
-## 🛠️ Công nghệ sử dụng (Tech Stack)
+## 🛠️ Công nghệ sử dụng
 * **Backend:** Java, Spring Boot
 * **Caching:** Redis
 * **Cloud Infrastructure from AWS:** DynamoDB, Lambda Function, API Gateway, S3, ...
 * **Frontend:** ReactJS
 
-## 🏗️ Kiến trúc hệ thống (System Architecture)
+## 🏗️ Kiến trúc hệ thống
 1. Order Service: Thực hiện các logic nghiệp vụ của việc mua vé  
 2. Inventory Service: Quản lý kho vé, xử lý Race Condition
 3. Payment Service: Xử lý thanh toán
