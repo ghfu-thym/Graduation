@@ -1,28 +1,30 @@
 package com.spike.ticket.service.implement;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spike.ticket.client.TicketClient;
 import com.spike.ticket.dto.TicketMetadata;
 import com.spike.ticket.dto.event.CategoryItem;
 import com.spike.ticket.dto.event.OrderConfirmedEvent;
+import com.spike.ticket.dto.event.TicketCreatedEvent;
 import com.spike.ticket.dto.request.CreateOrderRequest;
 import com.spike.ticket.dto.request.ReserveTicketRequest;
 import com.spike.ticket.dto.respone.OrderResponse;
 import com.spike.ticket.dto.respone.TicketReservationResponse;
 import com.spike.ticket.entity.Order;
 import com.spike.ticket.entity.OrderItem;
+import com.spike.ticket.entity.Ticket;
 import com.spike.ticket.enums.OrderStatus;
 import com.spike.ticket.kafka.publisher.OrderEventPublisher;
 import com.spike.ticket.mapper.OrderMapper;
 import com.spike.ticket.repository.OrderRepository;
 import com.spike.ticket.service.OrderService;
+import com.spike.ticket.utils.HmacUtils;
 import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Slf4j // ghi log
-public class OrderServiceImpl  implements OrderService {
+public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
@@ -46,6 +48,9 @@ public class OrderServiceImpl  implements OrderService {
     private final TicketClient ticketClient;
     private final OrderEventPublisher orderEventPublisher;
     private final ObjectMapper objectMapper;
+
+    @Value("${app.ticket.hmac-secret}")
+    private String secretKey;
 
     @Override
     @Transactional
@@ -76,7 +81,7 @@ public class OrderServiceImpl  implements OrderService {
                 throw new RuntimeException(e);
             }
 
-            Long price = metadata.getPrice()*(item.getQuantity());
+            Long price = metadata.getPrice() * (item.getQuantity());
             totalAmount += price;
 
             order.setEventId(metadata.getEventId());
@@ -105,13 +110,13 @@ public class OrderServiceImpl  implements OrderService {
         TicketReservationResponse result = TicketReservationResponse.builder()
                 .success(false)
                 .build();
-        try{
+        try {
             result = ticketClient.reserveTicket(ticketRequest);
-        } catch (FeignException.Conflict e){
+        } catch (FeignException.Conflict e) {
             throw new RuntimeException("Failed in feign call to inventory service:");
         }
 
-        if(!result.isSuccess()){
+        if (!result.isSuccess()) {
             Long index = result.getFailedCategoryIndex();
             OrderItem failedOrderItem = orderItems.get(index.intValue() - 1);
             String name = failedOrderItem.getName();
@@ -120,7 +125,7 @@ public class OrderServiceImpl  implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        String redisKey = "order_timeout:"+savedOrder.getOrderTrackingNumber();
+        String redisKey = "order_timeout:" + savedOrder.getOrderTrackingNumber();
 
 //        redisTemplate.opsForValue().set(
 //                redisKey,
@@ -129,7 +134,7 @@ public class OrderServiceImpl  implements OrderService {
 //                TimeUnit.MINUTES);
 
         //Test
-        redisTemplate.opsForValue().set(redisKey, "PENDING",10, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(redisKey, "PENDING", 10, TimeUnit.SECONDS);
 
         //TODO: message to payment service
         //
@@ -137,9 +142,9 @@ public class OrderServiceImpl  implements OrderService {
         return mapToResponse(savedOrder);
     }
 
-    public OrderResponse getOrderByTrackingNumber(String trackingNumber){
+    public OrderResponse getOrderByTrackingNumber(String trackingNumber) {
         Order order = orderRepository.findByOrderTrackingNumber(trackingNumber).orElseThrow(
-                () ->new RuntimeException("Order not found for tracking number: "+trackingNumber)
+                () -> new RuntimeException("Order not found for tracking number: " + trackingNumber)
         );
         return mapToResponse(order);
     }
@@ -148,11 +153,11 @@ public class OrderServiceImpl  implements OrderService {
     public OrderResponse cancelOrder(String orderTrackingNumber) {
 
         Order order = orderRepository.findByOrderTrackingNumber(orderTrackingNumber).orElseThrow(
-                () ->new RuntimeException("Order not found for tracking number: "+orderTrackingNumber)
+                () -> new RuntimeException("Order not found for tracking number: " + orderTrackingNumber)
         );
 
         //
-        if (order.getStatus() != OrderStatus.PENDING){
+        if (order.getStatus() != OrderStatus.PENDING) {
             throw new RuntimeException("Only can cancel pending order!");
         }
 
@@ -164,7 +169,7 @@ public class OrderServiceImpl  implements OrderService {
     }
 
     @Override
-    public Page<OrderResponse> getOrdersByUserID(Long userID, int page, int size ) {
+    public Page<OrderResponse> getOrdersByUserID(Long userID, int page, int size) {
         // Lưu ý cho FE: page -> số trang bắt đầu từ 0
         // size -> số phần tử 1 trang
         // sort theo id vì trong db id đang là auto incre
@@ -179,15 +184,15 @@ public class OrderServiceImpl  implements OrderService {
     public void completePayment(String orderTrackingNumber, String txnId) {
 
         Order order = orderRepository.findByOrderTrackingNumber(orderTrackingNumber).orElseThrow(
-                () ->new RuntimeException("Order not found for tracking number: "+orderTrackingNumber)
+                () -> new RuntimeException("Order not found for tracking number: " + orderTrackingNumber)
         );
 
-        if (order.getStatus() == OrderStatus.PAID){
+        if (order.getStatus() == OrderStatus.PAID) {
             log.info("Order {} already paid, skipping.", orderTrackingNumber);
             return;
         }
 
-        if (order.getStatus() == OrderStatus.CANCELLED|| order.getStatus() == OrderStatus.TIMEOUT){
+        if (order.getStatus() == OrderStatus.CANCELLED || order.getStatus() == OrderStatus.TIMEOUT) {
             log.info("Order {} is cancelled or timeout, refund in process.", orderTrackingNumber);
             orderEventPublisher.publishRefundOrder(orderTrackingNumber, order.getTotalAmount());
             return;
@@ -196,16 +201,46 @@ public class OrderServiceImpl  implements OrderService {
 
         order.setStatus(OrderStatus.PAID);
         order.setTxnId(txnId);
-        orderRepository.save(order);
+
 
         // xóa redis
         redisTemplate.delete("order_timeout:" + orderTrackingNumber);
 
-        // publish Kafka event để inventory service chuyển vé sang SOLD
+        // publish Kafka event để inventory service lưu cứng vào db
         OrderConfirmedEvent event = mapToOrderConfirmedEvent(order);
         orderEventPublisher.publishOrderConfirmed(event);
 
-        //TODO: message to notification service
+        //list ticket gắn trong order, sau này tra lịch sử mua sẽ ra
+        List<Ticket> ticketList = new ArrayList<>();
+
+        //tạo vé
+        for (OrderItem orderItem : order.getOrderItems()) {
+            for (int i = 0; i < orderItem.getQuantity(); i++) {
+                Ticket ticket = new Ticket();
+                String ticketNumber = generateTicketNumber(order.getEventId(), orderItem.getCategoryId());
+                ticket.setTicketNumber(ticketNumber);
+                ticket.setOrder(order);
+                ticket.setTicketCategoryId(orderItem.getCategoryId());
+
+                // sinh mã qr
+                // Ví dụ: eventID|categoryId|ticketNumber.signature
+                String payload = order.getEventId() + "|" + orderItem.getId() + "|" + ticketNumber;
+                String signature = HmacUtils.signHmacSha256(payload, secretKey);
+                String qrCode = payload + "." + signature;
+                ticket.setQrCode(qrCode);
+
+                //kafka gứi vé sang checkin service, chỉ cần gồm payload của vé, ko cần signature
+                orderEventPublisher.ticketCreated(new TicketCreatedEvent(order.getEventId(), orderItem.getId(), ticket.getTicketNumber()));
+                ticketList.add(ticket);
+            }
+        }
+
+        order.setTicketList(ticketList);
+
+        orderRepository.save(order);
+
+
+        //TODO: kafka event cho notification service gửi email, cần qr đầy đủ
     }
 
 
@@ -236,6 +271,15 @@ public class OrderServiceImpl  implements OrderService {
                 order.getOrderTrackingNumber(),
                 categoryItems
         );
+    }
+
+    //Định dạng: [EVENT_ID]-[CATEGORY_ID]-[TIMESTAMP_MILLIS]-[RANDOM]
+    private String generateTicketNumber(Long eventId, Long categoryId) {
+
+        long timestampMillis = System.currentTimeMillis();
+        String random = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+
+        return String.format("%d-%d-%d-%s", eventId, categoryId, timestampMillis, random);
     }
 }
 

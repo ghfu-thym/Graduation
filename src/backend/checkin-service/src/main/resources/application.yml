@@ -1,8 +1,8 @@
 server:
-  port: 8080
+  port: 8085
 spring:
   application:
-    name: order-service
+    name: checkin-service
 
   security:
     oauth2:
@@ -16,7 +16,7 @@ spring:
     # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có (Tiện lợi)
     # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
     # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
-    url: jdbc:mysql://localhost:3306/ticket_orders?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://localhost:3306/checkin?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: 3307a001
 
@@ -51,7 +51,7 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: order-group
+      group-id: checkin-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer

@@ -82,6 +82,12 @@ public class EventService {
 
     @Transactional
     public void addInspector(Long eventId, List<Long> userIds) {
+        Event event = eventRepository.findById(eventId).orElseThrow(
+                () -> new IllegalArgumentException("Event not found")
+        );
+        if (event.getStatus() != EventStatus.DRAFT) {
+            throw new RuntimeException("Event is not in draft status");
+        }
         for (Long userId : userIds) {
             EventMember eventMember = EventMember.builder()
                     .eventId(eventId)

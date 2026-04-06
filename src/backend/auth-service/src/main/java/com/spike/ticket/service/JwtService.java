@@ -16,7 +16,7 @@ public class JwtService {
     private final RsaKeyReader rsaKeyReader;
 
     // 1 ngày
-    private static final Long EXPIRATION_TIME = 86400000L;
+    private static final Long EXPIRATION_TIME = 86400000L*30;
 
     public String generateToken(User user) {
         try {
