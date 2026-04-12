@@ -1,0 +1,75 @@
+server:
+  port: 8086
+spring:
+  application:
+    name: notification-service
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY}
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
+#  datasource:
+#    # URL kết nối MySQL.
+#    # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có (Tiện lợi)
+#    # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
+#    # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
+#    url: jdbc:mysql://localhost:3306/notification?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+#    username: root
+#    password: 3307a001
+#
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#
+#  jpa:
+#    # open-in-view: false (Best practice)
+#    # Tắt việc giữ connection tới view layer, giúp tăng hiệu năng cho DB
+#    open-in-view: false
+#
+#    hibernate:
+#      # ddl-auto: update
+#      # Tự động so sánh Entity và DB:
+#      # - Nếu bảng chưa có -> Tự tạo.
+#      # - Nếu thiếu cột -> Tự thêm.
+#      # (Rất tiện cho giai đoạn code Khóa luận)
+#      ddl-auto: update
+#
+#    # In câu SQL ra console để bạn debug xem Hibernate đang làm gì
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true # Format câu SQL cho đẹp dễ nhìn
+#        dialect: org.hibernate.dialect.MySQLDialect
+#
+##  data:
+##    redis:
+##      host: localhost
+##      port: 6379
+##      timeout: 5000ms
+#
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#    consumer:
+#      group-id: notification-group
+#      auto-offset-reset: earliest
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+#      properties:
+#        spring.json.trusted.packages: "*"
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+## Cấu hình logging để dễ nhìn lỗi
+#logging:
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Xem giá trị tham số ? trong câu SQL
+
+app:
+  sendgrid:
+    sender-email: phuocthym@gmail.com
+    template-id:
+      ticket-qr: d-9ee254156127499a92340ad6459fcdcb
+#  ticket:
+#    hmac-secret: "${TICKET_HMAC_SECRET:TckS3cr3t2026!HighLoadSystem@Phuoc#99}"
