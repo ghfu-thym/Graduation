@@ -33,7 +33,7 @@ Vấn đề lớn nhất của các hệ thống bán vé thông thường là s
 7. Check in Service: Xử lý check in quét mã QR và quản lý danh sách khách tham dự
 8. Virtual Waiting Room: Quản lý hàng đợi khi lượng người dùng tăng cao  
 ## Luồng hoạt động chính của Virtual Waiting Room: ##
-![Virtual Waiting Room](references/for_readme/vwr.png) 
+![Virtual Waiting Room](references/for_readme/vwr_1.png) 
 1. Người dùng truy cập trang mua vé. Nếu FE phát hiện chưa đăng nhập/bị trả về token hết hạn => tự động chuyển hướng tới login.  
 2. Sau khi có token hợp lệ (visitor token), người dùng ấn vào mua vé được API Gateway HTTP kích hoạt Authorizer Function để xác thực token. Nếu đúng sẽ kích hoạt Director Function. Director kiểm tra trạng thái event(bình thường hay cần xếp hàng)
    2.1. Nếu là bình thường => kiểm tra bảng Event Config xem số người BE đang phục vụ. Nếu chưa vượt ngưỡng => cấp access token, cho phép đi thẳng vào thực hiện mua vé.  
