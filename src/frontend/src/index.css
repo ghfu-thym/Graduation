@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-void text-primary font-body-standard;
+    }
+}
+
+@layer components {
+    .card {
+        @apply bg-deep-teal border border-dark-border rounded-xl p-10 w-[90%] max-w-md shadow-card text-center transition-all duration-500 ease-in-out;
+    }
+    .screen {
+        @apply hidden;
+    }
+    .screen.active {
+        @apply block animate-fadeIn;
+    }
+    .btn {
+        @apply bg-white text-void border-2 border-transparent py-3 px-7 text-base font-medium rounded-full w-full cursor-pointer transition-all duration-200 ease-in-out;
+    }
+    .btn:hover {
+        @apply bg-muted-text;
+    }
+    .btn:focus {
+        @apply outline-none ring-2 ring-offset-2 ring-offset-deep-teal ring-neon-green;
+    }
+    .loader-container {
+        @apply my-5 mx-auto flex justify-center;
+    }
+    .lds-ring {
+        @apply inline-block relative w-[60px] h-[60px];
+    }
+    .lds-ring div {
+        @apply box-border block absolute w-[48px] h-[48px] m-[6px] border-[5px] border-neon-green rounded-full animate-spin;
+        border-color: #36F4A4 transparent transparent transparent;
+    }
+    .lds-ring div:nth-child(1) { animation-delay: -0.45s; }
+    .lds-ring div:nth-child(2) { animation-delay: -0.3s; }
+    .lds-ring div:nth-child(3) { animation-delay: -0.15s; }
+
+    .queue-box {
+        @apply bg-dark-forest border border-shade-70 rounded-xl p-6 my-6 relative;
+    }
+    .position-label {
+        @apply text-sm text-muted-text font-medium uppercase tracking-[1.54px];
+    }
+    .position-number {
+        @apply font-display-light text-7xl text-white leading-none my-2.5;
+    }
+    .position-number.pulse {
+        animation: numberUpdate 0.5s ease;
+    }
+    .token-box {
+        @apply bg-dark-forest border border-dashed border-shade-70 p-2.5 rounded-lg font-mono text-xs text-muted-text break-all mb-5 text-left;
+    }
+    .status-badge {
+        @apply inline-block py-1 px-3 rounded-full text-xs font-medium bg-white/20 text-white;
+    }
+}
+
+@keyframes numberUpdate {
+    0% { transform: scale(1); color: #ffffff; }
+    50% { transform: scale(1.1); color: #36F4A4; }
+    100% { transform: scale(1); color: #ffffff; }
+}
