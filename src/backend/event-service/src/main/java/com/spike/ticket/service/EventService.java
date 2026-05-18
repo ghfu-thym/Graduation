@@ -3,6 +3,7 @@ package com.spike.ticket.service;
 import com.spike.ticket.dto.CreateEventRequest;
 import com.spike.ticket.dto.CreateTicketRequest;
 import com.spike.ticket.dto.EventResponse;
+import com.spike.ticket.dto.PresignedUrlResponse;
 import com.spike.ticket.entity.Event;
 import com.spike.ticket.entity.EventImage;
 import com.spike.ticket.entity.EventMember;
@@ -29,12 +30,12 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventMemberRepository eventMemberRepository;
     private final EventImageRepository eventImageRepository;
-    private final FileStorageService fileStorageService;
     private final EventServicePublisher eventServicePublisher;
     private final TicketCategoryRepo ticketCategoryRepo;
+    private final S3Service s3Service;
 
     @Transactional
-    public EventResponse createEvent(Long creatorId, CreateEventRequest request) {
+    public EventResponse createEvent(Long creatorId,String username, String email, CreateEventRequest request) {
         // Validate: endTime phải sau startTime
         if (request.getEndTime().isBefore(request.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time");
@@ -43,32 +44,38 @@ public class EventService {
         //
         Event newEvent = Event.builder()
                 .name(request.getName())
+                .organizerId(creatorId)
+                .organizerName(username)
+                .organizerEmail(email)
                 .location(request.getLocation())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
                 .status(EventStatus.DRAFT)
                 .description(request.getDescription())
+                .imageUrls(request.getListOfImageUrls())
                 .build();
         Event savedEvent = eventRepository.save(newEvent);
 
         // lưu ảnh
-        List<String> imageUrls = fileStorageService.storeImages(request.getImages());
-        List<EventImage> eventImages = new ArrayList<>();
-        for (int i = 0; i < imageUrls.size(); i++) {
-            EventImage img = EventImage.builder()
-                    .event(savedEvent)
-                    .imageUrl(imageUrls.get(i))
-                    .displayOrder(i)
-                    .build();
-            eventImages.add(img);
-        }
-        if (!eventImages.isEmpty()) {
-            eventImageRepository.saveAll(eventImages);
+        List<String> imageUrls = newEvent.getImageUrls();
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            List<EventImage> eventImages = new ArrayList<>();
+            for (int i = 0; i < imageUrls.size(); i++) {
+                EventImage img = EventImage.builder()
+                        .event(savedEvent)
+                        .imageUrl(imageUrls.get(i))
+                        .displayOrder(i)
+                        .build();
+                eventImages.add(img);
+            }
+            if (!eventImages.isEmpty()) {
+                eventImageRepository.saveAll(eventImages);
+            }
         }
 
         // thêm ORGANIZER
         EventMember eventMember = EventMember.builder()
-                .eventId(savedEvent.getId())
+                .eventId(savedEvent.getEventId())
                 .userId(creatorId)
                 .role(EventRole.ORGANIZER)
                 .build();
@@ -78,6 +85,10 @@ public class EventService {
                 savedEvent.getName(), imageUrls.size(), creatorId);
 
         return EventResponse.fromEntity(savedEvent, imageUrls);
+    }
+
+    public PresignedUrlResponse getUploadPermission(String fileName, String contentType) {
+        return s3Service.generatePreSignedUrl(fileName, contentType);
     }
 
     @Transactional
@@ -131,12 +142,16 @@ public class EventService {
         if (ticketCategories.isEmpty()) {
             throw new IllegalArgumentException("Event has no ticket categories");
         }
+        List<EventMember> eventMemberList = eventMemberRepository.findByEventId(eventId);
+        if (eventMemberList.isEmpty()) {
+            throw new IllegalArgumentException("Event has no members");
+        }
+        List<Long> memberList = eventMemberList.stream().map(EventMember::getUserId).toList();
 
         event.setStatus(EventStatus.PUBLISHED);
 
-
-
-        eventServicePublisher.publishEventApproved(eventId,ticketCategories);
+        eventServicePublisher.publishEventApprovedInventory(eventId,ticketCategories, event.getName(), event.getOrganizerId(), event.getOrganizerName(), event.getOrganizerEmail());
+        eventServicePublisher.publishEventApprovedMember(eventId, memberList);
 
         //TODO: do something that user can see event on web
 

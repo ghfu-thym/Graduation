@@ -1,0 +1,25 @@
+package com.spike.ticket.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.regions.Region;
+
+@Configuration
+public class S3Config {
+    @Value("${app.aws.s3.bucket-name}")
+    private String bucketName;
+
+    @Value("${app.aws.s3.region}")
+    private String region;
+
+    @Bean
+    public S3Presigner s3Presigner() {
+        return S3Presigner.builder()
+                .region(Region.of(region))
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .build();
+    }
+}

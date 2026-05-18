@@ -21,7 +21,7 @@ public class EventResponse {
 
     public static EventResponse fromEntity(Event event, List<String> imageUrls) {
         return EventResponse.builder()
-                .id(event.getId())
+                .id(event.getEventId())
                 .name(event.getName())
                 .location(event.getLocation())
                 .startTime(event.getStartTime())

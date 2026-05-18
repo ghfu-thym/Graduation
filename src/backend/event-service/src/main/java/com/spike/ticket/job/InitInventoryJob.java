@@ -46,7 +46,7 @@ public class InitInventoryJob {
         for (Event event : upcomingEvents) {
             if (event.getStatus() == EventStatus.PUBLISHED && !event.getIsOpened()) {
 
-                List<TicketCategory> ticketCategories = ticketCategoryRepo.findByEventId(event.getId());
+                List<TicketCategory> ticketCategories = ticketCategoryRepo.findByEventId(event.getEventId());
 
                 for (TicketCategory ticketCategory : ticketCategories) {
                     TicketMetadata metadata = new TicketMetadata(
@@ -55,7 +55,7 @@ public class InitInventoryJob {
                             ticketCategory.getPrice(),
                             ticketCategory.getEventId(),
                             event.getName(),
-                            event.getImageUrl()
+                            event.getImageUrls().get(0)
                     );
 
                     String json = "";
@@ -72,7 +72,7 @@ public class InitInventoryJob {
                     redisTemplate.opsForValue().set(redisKey, json, ttl, TimeUnit.SECONDS);
                 }
 
-                eventServicePublisher.publishInitInventory(event.getId());
+                eventServicePublisher.publishInitInventory(event.getEventId());
                 event.setIsOpened(true);
                 eventRepository.save(event);
             }

@@ -6,6 +6,7 @@ import com.spike.ticket.dto.EventResponse;
 import com.spike.ticket.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,22 +19,31 @@ import java.util.List;
 @RestController
 @RequestMapping("api/v1/events")
 @RequiredArgsConstructor
+@Slf4j
 public class EventController {
 
     private final EventService eventService;
 
-    /**
-     * Tạo event mới (multipart/form-data vì có upload ảnh).
-     * Dùng @ModelAttribute thay vì @RequestBody vì request chứa cả file + JSON fields.
-     */
-    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+
+    @PostMapping(value = "/create")
     public ResponseEntity<EventResponse> createEvent(
             @Valid @ModelAttribute CreateEventRequest request,
             JwtAuthenticationToken auth) {
+        log.info("Create event request: {}", request);
 
         Long userId = Long.parseLong(auth.getToken().getSubject());
-        EventResponse response = eventService.createEvent(userId, request);
+        String username = auth.getToken().getClaimAsString("username");
+        String email = auth.getToken().getClaimAsString("email");
+        EventResponse response = eventService.createEvent(userId,username, email, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/upload-url")
+    public ResponseEntity<?> generatePreSignedUrl(
+            @RequestParam String fileName,
+            @RequestParam String contentType) {
+        log.info("Generate pre-signed URL for file: {} with content type: {}", fileName, contentType);
+        return ResponseEntity.ok(eventService.getUploadPermission(fileName, contentType));
     }
 
     @PreAuthorize("@eventAuth.isOrganizer(#eventId, authentication)")

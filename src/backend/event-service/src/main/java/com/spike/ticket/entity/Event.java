@@ -1,11 +1,13 @@
 package com.spike.ticket.entity;
 
 import com.spike.ticket.enums.EventStatus;
+import com.spike.ticket.utils.StringListConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "events")
@@ -17,10 +19,19 @@ import java.time.LocalDateTime;
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long eventId;
 
     @Column(name = "name", length = 255, nullable = false)
     private String name;
+
+    @Column(name = "organizer_id", nullable = false)
+    private Long organizerId;
+
+    @Column(name = "organizer_name", nullable = false)
+    private String organizerName;
+
+    @Column(name = "organizer_email", nullable = false)
+    private String organizerEmail;
 
     @Column(name = "location", nullable = false)
     private String location;
@@ -32,8 +43,9 @@ public class Event {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Convert(converter = StringListConverter.class)
+    @Column(name = "image_urls", columnDefinition = "json")
+    private List<String> imageUrls;
 
     @Enumerated(EnumType.STRING)
     @Column
