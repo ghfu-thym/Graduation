@@ -10,7 +10,7 @@ const Header = () => {
                 <nav className="hidden md:flex items-center space-x-8">
                     <a href="#" className="text-gray-500 hover:text-black transition-colors">Sự kiện</a>
                     <a href="#" className="text-gray-500 hover:text-black transition-colors">Về chúng tôi</a>
-                    <a href="#" className="text-gray-500 hover:text-black transition-colors">Hỗ trợ</a>
+                    <a href="#/create-event" className="text-gray-500 hover:text-black transition-colors">Tạo sự kiện</a>
                 </nav>
                 <div className="flex items-center space-x-4">
                     <button className="bg-transparent border border-neon-green text-neon-green rounded-full px-6 py-2 text-sm font-bold hover:bg-neon-green hover:text-background transition-colors">

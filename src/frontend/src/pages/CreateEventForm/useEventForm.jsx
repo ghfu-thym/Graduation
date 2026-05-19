@@ -9,8 +9,12 @@ const useEventForm = () => {
         location: '',
         startTime: '',
         endTime: '',
+        ticketOpenTime: '',
         description: '',
     });
+    const [ticketCategories, setTicketCategories] = useState([
+        { name: '', price: '', quantity: '', description: '' },
+    ]);
     const [filesToUpload, setFilesToUpload] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const [uploadProgress, setUploadProgress] = useState({});
@@ -87,6 +91,22 @@ const useEventForm = () => {
         URL.revokeObjectURL(removedPreview.url);
     };
 
+    const handleCategoryChange = (index, field, value) => {
+        setTicketCategories((prev) => {
+            const next = [...prev];
+            next[index] = { ...next[index], [field]: value };
+            return next;
+        });
+    };
+
+    const handleAddCategory = () => {
+        setTicketCategories((prev) => [...prev, { name: '', price: '', quantity: '', description: '' }]);
+    };
+
+    const handleRemoveCategory = (index) => {
+        setTicketCategories((prev) => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const isUploading = Object.values(uploadProgress).some(p => p < 100);
@@ -95,10 +115,29 @@ const useEventForm = () => {
             return;
         }
 
+        const normalizedCategories = ticketCategories
+            .map((category) => ({
+                name: category.name?.trim(),
+                price: category.price,
+                quantity: category.quantity,
+                description: category.description?.trim(),
+            }))
+            .filter((category) => category.name || category.price || category.quantity || category.description);
+
+        const hasValidCategory = normalizedCategories.some(
+            (category) => category.name && category.price && category.quantity
+        );
+
+        if (!hasValidCategory) {
+            alert('Vui lòng thêm ít nhất 1 hạng vé với tên, giá và số lượng.');
+            return;
+        }
+
         console.info('[submit] uploadedImageUrls:', uploadedImageUrls);
         const eventData = {
             ...formData,
             listOfImageUrls: uploadedImageUrls,
+            ticketCategoryList: normalizedCategories,
         };
         console.info('[submit] payload:', eventData);
 
@@ -106,7 +145,8 @@ const useEventForm = () => {
             await apiCreateEvent(eventData);
             alert('Event created successfully!');
             // Reset form
-            setFormData({ name: '', location: '', startTime: '', endTime: '', description: '' });
+            setFormData({ name: '', location: '', startTime: '', endTime: '', ticketOpenTime: '', description: '' });
+            setTicketCategories([{ name: '', price: '', quantity: '', description: '' }]);
             setFilesToUpload([]);
             setImagePreviews([]);
             setUploadProgress({});
@@ -121,12 +161,16 @@ const useEventForm = () => {
     return {
         formData,
         setFormData,
+        ticketCategories,
         filesToUpload,
         imagePreviews,
         uploadProgress,
         uploadedImageUrls,
         handleFileSelect,
         handleRemoveImage,
+        handleCategoryChange,
+        handleAddCategory,
+        handleRemoveCategory,
         handleSubmit,
     };
 };

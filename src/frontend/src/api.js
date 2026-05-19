@@ -1,11 +1,11 @@
 import axios from 'axios';
 
 const API_BASE_URL = '/api/v1'; // Giả định proxy đã được cấu hình trong vite.config.js
+const FEATURED_EVENTS_ENDPOINT = "https://d1cpe6xn6cl1ii.cloudfront.net/api/v1/events/info-home";
 
 //TODO: nho sua token
 //const token = localStorage.getItem('authToken');
-const tmpToken = 'eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJlbWFpbCI6InNwaWtlLnVzZXJAZXhhbXBsZS5jb20iLCJ1c2VybmFtZSI6InNwaWtlX3VzZXIiLCJpYXQiOjE3Nzg4NTk2MTMsImV4cCI6MTc4MTQ1MTYxM30.h8pzRXXna5htUBo68iUlmWP-sRmgrC_364TY42ew4LW-2TG5cvVgn5CNBH861NFvXIZwjH_seO-SIpj3iyiBPFluscLNQNuja_Lr2QY7V9klzhIC8Ab-gWjBK0ajDCQGJQ5GryagRnoBUdFnrauVyEkk495lSs27cF5_S4woSQK85xgligPgdgp6K-k1uMvuRqyUqtCmV7SE1xO-Dv125O4MZLRYARxnoSRMEe0NW3PVlnspCbG0H0v8hW5XEAKODkAKX69PiXJ49A2ZzlBS_he3WpoXYOpwFLpB3r-hWNhrrUiFnORHU1LKFqrWIkFgHWqiDX3HaBOxu9WX8B_WKg'
-
+const tmpToken = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJlbWFpbCI6InNwaWtlLnVzZXJAZXhhbXBsZS5jb20iLCJ1c2VybmFtZSI6InNwaWtlX3VzZXIiLCJpYXQiOjE3NzkxNTU2MDEsImV4cCI6MTc4MTc0NzYwMX0.Je2KmjTczKFVtUGBUjJwlwSSgyheUjdK_PNJZD4tz1vermmkdv4vLMK5cV2e52trBhzO0rhqm5FIwLKuUnYmX0y_rsX3CPS-Wj-41HJFHSNznXLBlS0KMZMy5X-x8PUZ-vbhQssEBibvZa-C3GXquEblJPH9oRT6XOtRDVtiNgDoqws0M0sLilaKVQSjF61Y8QCILS2gb3MPfb7lXwI7DNsibHU6OitaFqQg-c0d4dKVKtRTEBOb0YNmhdkKbc0O4Nmz9Pv4ZxdyQzHWMCkDBy1DK5TwU9RMTOyppV753tLAy4Eitj170GA1tiuqJt3UtgNoE156x0QViNaOFGfbGQ";
 /**
  * Lấy Pre-signed URL từ Backend.
  * @param {File} file - File cần upload.
@@ -21,7 +21,8 @@ export const getUploadUrl = (fileName, contentType) => {
       contentType,
     },
     headers: {
-      Authorization: `Bearer ${token}`
+      "Bypass-Tunnel-Reminder": "true",
+      'Authorization': `Bearer ${token}`,
     }
   });
 };
@@ -48,25 +49,32 @@ export const uploadFileToS3 = (uploadUrl, file, onUploadProgress) => {
  * @returns {Promise<any>}
  */
 export const createEvent = (eventData) => {
-  const formData = new FormData();
   //TODO: nhớ đổi
 //  const token = localStorage.getItem('authToken') ; // Or however you store your token
   const token = tmpToken;
 
-  Object.keys(eventData).forEach(key => {
-    if (key === 'listOfImageUrls') {
-      eventData[key].forEach(url => {
-        formData.append(key, url);
-      });
-    } else {
-      formData.append(key, eventData[key]);
-    }
-  });
-
-  return axios.post(`${API_BASE_URL}/events/create`, formData, {
+  return axios.post(`${API_BASE_URL}/events/create`, eventData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
-      'Authorization': `Bearer ${token}` // Add the token to the header
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      "Bypass-Tunnel-Reminder": "true",
+    },
+  });
+};
+
+/**
+ * Lay danh sach su kien noi bat cho trang Home.
+ * TODO: Cap nhat FEATURED_EVENTS_ENDPOINT theo backend.
+ * @returns {Promise<{data: Array}>}
+ */
+export const getFeaturedEvents = () => {
+  if (!FEATURED_EVENTS_ENDPOINT) {
+    return Promise.resolve({ data: [] });
+  }
+
+  return axios.get(FEATURED_EVENTS_ENDPOINT, {
+    headers: {
+      "Bypass-Tunnel-Reminder": "true",
     },
   });
 };

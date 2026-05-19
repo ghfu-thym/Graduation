@@ -1,17 +1,20 @@
 import React from 'react';
 import useEventForm from './useEventForm';
 import EventForm from './EventForm';
-import UploadProgress from './UploadProgress';
 
 const CreateEventForm = () => {
     const {
         formData,
         setFormData,
+        ticketCategories,
         filesToUpload,
         imagePreviews,
         uploadProgress,
         handleFileSelect,
         handleRemoveImage,
+        handleCategoryChange,
+        handleAddCategory,
+        handleRemoveCategory,
         handleSubmit,
     } = useEventForm();
 
@@ -24,13 +27,15 @@ const CreateEventForm = () => {
                     <EventForm
                         formData={formData}
                         setFormData={setFormData}
+                        ticketCategories={ticketCategories}
+                        handleCategoryChange={handleCategoryChange}
+                        handleAddCategory={handleAddCategory}
+                        handleRemoveCategory={handleRemoveCategory}
                         handleFileSelect={handleFileSelect}
                         handleSubmit={handleSubmit}
-                    />
-                    <UploadProgress
+                        imagePreviews={imagePreviews}
                         filesToUpload={filesToUpload}
                         uploadProgress={uploadProgress}
-                        imagePreviews={imagePreviews}
                         handleRemoveImage={handleRemoveImage}
                     />
                 </div>
@@ -40,5 +45,3 @@ const CreateEventForm = () => {
 };
 
 export default CreateEventForm;
-
-

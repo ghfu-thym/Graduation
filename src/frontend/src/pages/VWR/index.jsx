@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const CLOUDFRONT_API_URL =
   import.meta.env.VITE_VWR_CLOUDFRONT_API_URL ||
-  "https://d1cpe6xn6cl1ii.cloudfront.net/ticket-gate/1";
+  "https://d1cpe6xn6cl1ii.cloudfront.net/api/v1/ticket-gate/1";
 const WEBSOCKET_URL =
   import.meta.env.VITE_VWR_WEBSOCKET_URL ||
-  "wss://tlw4uxxvsd.execute-api.ap-southeast-1.amazonaws.com/dev";
+  "wss://dlhievog91.execute-api.ap-southeast-1.amazonaws.com/test/";
 const DEFAULT_LOGIN_TOKEN =
   import.meta.env.VITE_VWR_LOGIN_TOKEN ||
-  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMDAiLCJyb2xlIjoiVVNFUiIsImlhdCI6MTc3MzcyNzk2MiwiZXhwIjoxNzc2MzE5OTYyfQ.aTDPspTvek9196IYwfV3p9epdUI7E0nPCkNHAbvGkIchFAbfg4BDmoGmIB77LMlYfMbTPmdMnBAJfnbJGG40aFCzogjoKSlmAduGf-j6BUIftFOQozGWK8et8gxmzkUlrwIKvjmLk2q-TbGZMx8t6dM0u0cRZGujtCHm9d7kxOfG-CU3WDtlBOFfIWGzgPTD3M8Zkqqh56KTkiO9HCMMciqTvB3i6JF_V_tWoZ2nsecJICuU3yw7gdgkiB4mtdyi3OdKvhhFT-C8G_hiMSIkIIW8FMM7mjpRB2GbcrhftjWDmVwEMwAKk_QEIEtd4rbWHh___n4mxzzMIPuDnagXMg";
+  "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIzIiwicm9sZSI6IlVTRVIiLCJlbWFpbCI6InNwaWtlLnVzZXJAZXhhbXBsZS5jb20iLCJ1c2VybmFtZSI6InNwaWtlX3VzZXIiLCJpYXQiOjE3NzkxNTU2MDEsImV4cCI6MTc4MTc0NzYwMX0.Je2KmjTczKFVtUGBUjJwlwSSgyheUjdK_PNJZD4tz1vermmkdv4vLMK5cV2e52trBhzO0rhqm5FIwLKuUnYmX0y_rsX3CPS-Wj-41HJFHSNznXLBlS0KMZMy5X-x8PUZ-vbhQssEBibvZa-C3GXquEblJPH9oRT6XOtRDVtiNgDoqws0M0sLilaKVQSjF61Y8QCILS2gb3MPfb7lXwI7DNsibHU6OitaFqQg-c0d4dKVKtRTEBOb0YNmhdkKbc0O4Nmz9Pv4ZxdyQzHWMCkDBy1DK5TwU9RMTOyppV753tLAy4Eitj170GA1tiuqJt3UtgNoE156x0QViNaOFGfbGQ";
 
 const Vwr = () => {
   const [screen, setScreen] = useState("initial");
@@ -68,6 +68,7 @@ const Vwr = () => {
         shardCount: 1,
       };
       ws.send(JSON.stringify(registerPayload));
+      console.log("sent to ws")
     };
 
     ws.onmessage = (event) => {
@@ -103,17 +104,35 @@ const Vwr = () => {
     showScreen("loading");
 
     try {
-      const response = await fetch(CLOUDFRONT_API_URL);
+
+      const response = await fetch(CLOUDFRONT_API_URL, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${loginToken}`
+        }
+      });
+
       const data = await response.json();
 
+      if (response.status === 401 || data.action === "LOGIN_REQUIRED") {
+        handleError("Bạn chưa đăng nhập. Không thể tiến hành mua vé.");
+        return;
+      }
+
       if (data.action === "BYPASS") {
-        handleSuccess(data.passToken);
+        handleSuccess(data.accessToken);
         return;
       }
 
       if (data.action === "QUEUE" || response.status === 429) {
         showScreen("queue");
         connectWebSocket(loginToken, data.eventId || "1");
+        return;
+      }
+
+      if (response.status === 403) {
+        handleError(data.message || "Sự kiện hiện chưa mở bán.");
         return;
       }
 
