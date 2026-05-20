@@ -194,15 +194,15 @@ const EventDetail = ({ eventId }) => {
               </p>
               <div className="flex items-baseline gap-2 mb-space-6">
                 {minPrice === null ? (
-                  <span className="font-heading-2 text-heading-2 text-gray-900 font-semibold">
-                    Dang cap nhat
+                  <span className="4 text-heading-4 text-gray-900 font-semibold">
+                    Đang cập nhật
                   </span>
                 ) : (
                   <>
-                    <span className="font-heading-2 text-heading-2 text-gray-900 font-semibold">
+                    <span className="font-heading-4 text-heading-4 text-gray-900 font-semibold">
                       {formatPrice(minPrice)}
                     </span>
-                    <span className="font-body-large text-body-large text-gray-500">VND</span>
+                    <span className="font-body-medium text-body-medium text-gray-500">VNĐ</span>
                   </>
                 )}
               </div>
