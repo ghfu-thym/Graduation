@@ -11,6 +11,7 @@ const useEventForm = () => {
         endTime: '',
         ticketOpenTime: '',
         description: '',
+        memberEmails: '',
     });
     const [ticketCategories, setTicketCategories] = useState([
         { name: '', price: '', quantity: '', description: '' },
@@ -118,8 +119,8 @@ const useEventForm = () => {
         const normalizedCategories = ticketCategories
             .map((category) => ({
                 name: category.name?.trim(),
-                price: category.price,
-                quantity: category.quantity,
+                price: category.price === '' ? null : Number(category.price),
+                quantity: category.quantity === '' ? null : Number(category.quantity),
                 description: category.description?.trim(),
             }))
             .filter((category) => category.name || category.price || category.quantity || category.description);
@@ -133,11 +134,27 @@ const useEventForm = () => {
             return;
         }
 
+        const memberEmailList = (formData.memberEmails || '')
+            .split(/[\n,;]+/)
+            .map((email) => email.trim())
+            .filter(Boolean);
+
+        if (memberEmailList.length === 0) {
+            alert('Vui lòng nhập ít nhất 1 email thành viên.');
+            return;
+        }
+
         console.info('[submit] uploadedImageUrls:', uploadedImageUrls);
         const eventData = {
-            ...formData,
+            name: formData.name,
+            location: formData.location,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            ticketOpenTime: formData.ticketOpenTime,
+            description: formData.description,
             listOfImageUrls: uploadedImageUrls,
             ticketCategoryList: normalizedCategories,
+            memberEmailList,
         };
         console.info('[submit] payload:', eventData);
 
@@ -145,7 +162,15 @@ const useEventForm = () => {
             await apiCreateEvent(eventData);
             alert('Event created successfully!');
             // Reset form
-            setFormData({ name: '', location: '', startTime: '', endTime: '', ticketOpenTime: '', description: '' });
+            setFormData({
+                name: '',
+                location: '',
+                startTime: '',
+                endTime: '',
+                ticketOpenTime: '',
+                description: '',
+                memberEmails: '',
+            });
             setTicketCategories([{ name: '', price: '', quantity: '', description: '' }]);
             setFilesToUpload([]);
             setImagePreviews([]);

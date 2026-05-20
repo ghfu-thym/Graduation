@@ -3,13 +3,18 @@ import Header from './components/Header';
 import CreateEventForm from './pages/CreateEventForm';
 import Vwr from './pages/VWR';
 import Home from './pages/Home';
+import EventDetail from './pages/EventDetail';
 
 const getRouteFromHash = () => {
   const hash = window.location.hash.replace('#', '');
-  if (hash.startsWith('/')) {
-    return hash.slice(1);
+  const normalized = hash.startsWith('/') ? hash.slice(1) : hash;
+
+  if (normalized.startsWith('event/')) {
+    const eventId = normalized.split('/')[1];
+    return { name: 'event', eventId };
   }
-  return hash || 'home';
+
+  return { name: normalized || 'home' };
 };
 
 function App() {
@@ -21,13 +26,22 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const isVwr = route === 'vwr';
-  const isHome = route === 'home';
+  const isVwr = route.name === 'vwr';
+  const isHome = route.name === 'home';
+  const isEventDetail = route.name === 'event';
 
   return (
     <div className="bg-background min-h-screen flex flex-col">
       <Header />
-      {isHome ? <Home /> : isVwr ? <Vwr /> : <CreateEventForm />}
+      {isHome ? (
+        <Home />
+      ) : isVwr ? (
+        <Vwr />
+      ) : isEventDetail ? (
+        <EventDetail eventId={route.eventId} />
+      ) : (
+        <CreateEventForm />
+      )}
     </div>
   );
 }

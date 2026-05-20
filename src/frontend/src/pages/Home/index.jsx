@@ -21,14 +21,22 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
 
+  const getEventId = (eventItem) => eventItem.eventId ?? eventItem.id;
+
+  const goToDetail = (eventId) => {
+    if (!eventId) return;
+    window.location.hash = `/event/${eventId}`;
+  };
+
   const slides = useMemo(() => {
     return featuredEvents.slice(0, 4).map((eventItem, index) => {
       const dateLabel = formatEventDate(eventItem.startTime);
       const locationLabel = eventItem.location || "";
       const dateLocation = [dateLabel, locationLabel].filter(Boolean).join(" • ");
+      const eventId = getEventId(eventItem);
 
       return {
-        id: eventItem.id ?? `${eventItem.eventName}-${index}`,
+        id: eventId ?? `${eventItem.eventName}-${index}`,
         title: eventItem.eventName,
         dateLocation,
         imageUrl: eventItem.imageUrl,
@@ -63,6 +71,7 @@ const Home = () => {
         setIsLoading(true);
         setLoadError("");
         const response = await getFeaturedEvents();
+
         if (!isMounted) return;
         setFeaturedEvents(response?.data ?? []);
       } catch (error) {
@@ -126,6 +135,7 @@ const Home = () => {
                         <button
                           className="bg-[#00f59b] text-[#006b41] text-[16px] leading-[24px] rounded-full py-[12px] px-[32px] hover:bg-[#53ffab] transition-colors"
                           type="button"
+                          onClick={() => goToDetail(slide.id)}
                         >
                           Mua vé ngay
                         </button>
@@ -204,6 +214,7 @@ const Home = () => {
               <div
                 key={`${eventItem.eventName}-${index}`}
                 className="bg-[#f8f9fa] border border-[#b9cbbd] rounded-xl overflow-hidden multi-shadow glass-glow group cursor-pointer hover:bg-[#f3f4f5] transition-all"
+                onClick={() => goToDetail(getEventId(eventItem))}
               >
                 <div className="h-64 bg-[#edeeef] relative overflow-hidden">
                   <img

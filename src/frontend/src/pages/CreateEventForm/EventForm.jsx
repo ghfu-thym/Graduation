@@ -98,6 +98,20 @@ const EventForm = ({
             </div>
 
             <div>
+                <label className="block font-caption text-sm text-gray-700 mb-space-2" htmlFor="memberEmails">Danh sách email thành viên <span className="text-red-500">*</span></label>
+                <textarea
+                    id="memberEmails"
+                    rows="3"
+                    name="memberEmails"
+                    value={formData.memberEmails}
+                    onChange={handleChange}
+                    placeholder="Ví dụ: member1@email.com, member2@email.com"
+                    className="w-full bg-gray-50 border border-gray-300 rounded-md px-space-4 py-space-3 text-black font-body-standard placeholder:text-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                ></textarea>
+                <p className="mt-2 text-xs text-gray-500">Nhập nhiều email, cách nhau bằng dấu phẩy hoặc xuống dòng.</p>
+            </div>
+
+            <div>
                 <label className="block font-caption text-sm text-gray-700 mb-space-2">Ảnh sự kiện (tối đa 5)</label>
                 <div className="mt-2 rounded-lg border border-dashed border-gray-300 px-6 py-10">
                     <div className="flex flex-col gap-space-6">

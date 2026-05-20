@@ -78,3 +78,15 @@ export const getFeaturedEvents = () => {
     },
   });
 };
+
+export const getEventDetail = (eventId) => {
+  const endpoint = `https://d1cpe6xn6cl1ii.cloudfront.net/api/v1/events/${eventId}/info-detail`;
+  // if (!endpoint) {
+  //   return Promise.resolve({ data: [] });
+  // }
+  return axios.get(endpoint, {
+    headers: {
+      "Bypass-Tunnel-Reminder": "true",
+    },
+  });
+}
