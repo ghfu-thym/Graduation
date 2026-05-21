@@ -1,18 +1,17 @@
 package com.spike.ticket.dto;
 
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @Setter
+@ToString
 public class CreateEventRequest {
 
     @NotBlank(message = "Event name is required")
@@ -30,13 +29,24 @@ public class CreateEventRequest {
     @Future(message = "End time must be in the future")
     private LocalDateTime endTime;
 
+    @Future(message = "Ticket open time must be in the future")
+    private LocalDateTime ticketOpenTime;
+
     @Size(max = 2000, message = "Description must not exceed 2000 characters")
     private String description;
 
     /**
-     * Danh sách ảnh upload (tối đa 5 ảnh).
+     * 
      * Không bắt buộc — có thể tạo event không có ảnh.
      */
-    private List<MultipartFile> images;
+    private List<String> listOfImageUrls;
+
+    @Valid
+    @NotEmpty(message = "List ticket cannot empty")
+    private List<CreateCategoryRequest> ticketCategoryList;
+
+    @Valid
+    @NotEmpty(message = "List member cannot empty")
+    private List<String> memberEmailList;
 }
 
