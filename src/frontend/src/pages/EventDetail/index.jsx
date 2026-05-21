@@ -36,7 +36,13 @@ const EventDetail = ({ eventId }) => {
         setLoadError("");
         const response = await getEventDetail(eventId);
         if (!isMounted) return;
-        setEventDetail(response?.data ?? null);
+        const detailData = response?.data ?? null;
+        setEventDetail(detailData);
+
+        const resolvedId = detailData?.id ? String(detailData.id) : "";
+        if (resolvedId && resolvedId !== String(eventId)) {
+          window.location.hash = `#/event/${resolvedId}`;
+        }
       } catch (error) {
         if (!isMounted) return;
         setLoadError("Khong the tai chi tiet su kien.");
@@ -72,6 +78,31 @@ const EventDetail = ({ eventId }) => {
   }, [ticketCategories]);
 
   const heroImage = galleryImages[0] || eventDetail?.imageUrls?.[0] || "";
+
+  const handleBuyTicket = () => {
+    const authToken = localStorage.getItem("authToken");
+    const nextRoute = `#/vwr/${eventId || "1"}`;
+
+    if (!authToken) {
+      localStorage.setItem("postLoginRedirect", nextRoute);
+      window.location.hash = "#/login";
+      return;
+    }
+
+    if (eventDetail) {
+      const snapshot = {
+        id: eventDetail.id,
+        name: eventDetail.name,
+        location: eventDetail.location,
+        startTime: eventDetail.startTime,
+        imageUrl: eventDetail.imageUrls?.[0] || "",
+        categoryItemList: eventDetail.categoryItemList || [],
+      };
+      localStorage.setItem("vwr_event_snapshot", JSON.stringify(snapshot));
+    }
+
+    window.location.hash = nextRoute;
+  };
 
   if (!eventId) {
     return (
@@ -235,6 +266,7 @@ const EventDetail = ({ eventId }) => {
               <button
                 className="w-full bg-[#36F4A4] text-gray-900 font-body-large text-body-large font-semibold rounded-full py-4 px-6 hover:bg-[#2bd990] hover:shadow-lg focus:ring-2 focus:ring-[#36F4A4] focus:ring-offset-2 focus:ring-offset-white transition-all flex items-center justify-center gap-2"
                 type="button"
+                onClick={handleBuyTicket}
               >
                 <span>Mua vé ngay</span>
                 <span className="material-symbols-outlined text-xl">arrow_forward</span>
