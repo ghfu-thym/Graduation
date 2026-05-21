@@ -1,9 +1,6 @@
 package com.spike.ticket.service;
 
-import com.spike.ticket.dto.CreateEventRequest;
-import com.spike.ticket.dto.CreateTicketRequest;
-import com.spike.ticket.dto.EventResponse;
-import com.spike.ticket.dto.PresignedUrlResponse;
+import com.spike.ticket.dto.*;
 import com.spike.ticket.entity.Event;
 import com.spike.ticket.entity.EventImage;
 import com.spike.ticket.entity.EventMember;
@@ -34,8 +31,77 @@ public class EventService {
     private final TicketCategoryRepo ticketCategoryRepo;
     private final S3Service s3Service;
 
+
+    public EventDetail getEventById(Long eventId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(
+                () -> new IllegalArgumentException("Event not found")
+        );
+
+        List<EventImage> orderedImages = eventImageRepository.findByEventIdOrderByDisplayOrderAsc(eventId);
+        List<String> imageUrls = orderedImages.isEmpty()
+                ? (event.getImageUrls() == null ? List.of() : event.getImageUrls())
+                : orderedImages.stream().map(EventImage::getImageUrl).toList();
+
+        List<CreateCategoryRequest> categoryItems = getTicketCategoryByEventId(eventId);
+
+        return EventDetail.builder()
+                .id(event.getEventId())
+                .name(event.getName())
+                .location(event.getLocation())
+                .startTime(event.getStartTime())
+                .endTime(event.getEndTime())
+                .description(event.getDescription())
+                .imageUrls(imageUrls)
+                .categoryItemList(categoryItems)
+                .createdAt(event.getCreatedAt())
+                .build();
+    }
+
+    public List<EventSummarize> getHomeData() {
+        List<Event> eventList = eventRepository.findEventByStatus(EventStatus.PUBLISHED);
+        return getEventSummarizes(eventList);
+    }
+
+    public List<EventSummarize> getDraftEvent() {
+        List<Event> eventList = eventRepository.findEventByStatus(EventStatus.DRAFT);
+        return getEventSummarizes(eventList);
+    }
+
+    private List<EventSummarize> getEventSummarizes(List<Event> eventList) {
+        List<EventSummarize> summarizeList = new ArrayList<>();
+        for (Event event : eventList) {
+            EventSummarize summarize = EventSummarize.builder()
+                    .eventId(event.getEventId())
+                    .eventName(event.getName())
+                    .startTime(event.getStartTime().toString())
+                    .location(event.getLocation())
+                    .minPrice(ticketCategoryRepo.findMinPriceByEventId(event.getEventId()))
+                    .imageUrl(event.getImageUrls().isEmpty() ? "" : event.getImageUrls().get(0))
+                    .build();
+            summarizeList.add(summarize);
+        }
+
+        return summarizeList;
+    }
+
+    // tan dung dto
+    public List<CreateCategoryRequest> getTicketCategoryByEventId(Long eventId) {
+        List<TicketCategory> ticketCategoryList = ticketCategoryRepo.findByEventId(eventId);
+        List<CreateCategoryRequest> requestList = new ArrayList<>();
+        for (TicketCategory category : ticketCategoryList) {
+            CreateCategoryRequest request = CreateCategoryRequest.builder()
+                    .name(category.getName())
+                    .price(category.getPrice())
+                    .quantity(category.getQuantity())
+                    .description(category.getDescription())
+                    .build();
+            requestList.add(request);
+        }
+        return requestList;
+    }
+
     @Transactional
-    public EventResponse createEvent(Long creatorId,String username, String email, CreateEventRequest request) {
+    public EventResponse createEvent(Long creatorId, String username, String email, CreateEventRequest request) {
         // Validate: endTime phải sau startTime
         if (request.getEndTime().isBefore(request.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time");
@@ -51,6 +117,7 @@ public class EventService {
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
                 .status(EventStatus.DRAFT)
+                .isOpened(false)
                 .description(request.getDescription())
                 .imageUrls(request.getListOfImageUrls())
                 .build();
@@ -73,13 +140,28 @@ public class EventService {
             }
         }
 
+        List<CreateCategoryRequest> requestList = request.getTicketCategoryList();
+        for (CreateCategoryRequest categoryRequest : requestList) {
+            TicketCategory category = TicketCategory.builder()
+                    .eventId(savedEvent.getEventId())
+                    .name(categoryRequest.getName())
+                    .price(categoryRequest.getPrice())
+                    .quantity(categoryRequest.getQuantity())
+                    .description(categoryRequest.getDescription())
+                    .build();
+            ticketCategoryRepo.save(category);
+        }
+
         // thêm ORGANIZER
         EventMember eventMember = EventMember.builder()
                 .eventId(savedEvent.getEventId())
-                .userId(creatorId)
+                .email(email)
                 .role(EventRole.ORGANIZER)
                 .build();
         eventMemberRepository.save(eventMember);
+
+        // them inspector
+        addInspector(savedEvent.getEventId(), request.getMemberEmailList());
 
         log.info("Created event '{}' with {} images by user {}",
                 savedEvent.getName(), imageUrls.size(), creatorId);
@@ -92,17 +174,17 @@ public class EventService {
     }
 
     @Transactional
-    public void addInspector(Long eventId, List<Long> userIds) {
+    public void addInspector(Long eventId, List<String> userEmails) {
         Event event = eventRepository.findById(eventId).orElseThrow(
                 () -> new IllegalArgumentException("Event not found")
         );
         if (event.getStatus() != EventStatus.DRAFT) {
             throw new RuntimeException("Event is not in draft status");
         }
-        for (Long userId : userIds) {
+        for (String userEmail : userEmails) {
             EventMember eventMember = EventMember.builder()
                     .eventId(eventId)
-                    .userId(userId)
+                    .email(userEmail)
                     .role(EventRole.INSPECTOR)
                     .build();
             eventMemberRepository.save(eventMember);
@@ -110,7 +192,7 @@ public class EventService {
     }
 
     @Transactional
-    public void syncTicketCategory(Long eventId, CreateTicketRequest request){
+    public void syncTicketCategory(Long eventId, CreateTicketRequest request) {
 
         Event event = eventRepository.findById(eventId).orElseThrow(
                 () -> new IllegalArgumentException("Event not found")
@@ -137,7 +219,6 @@ public class EventService {
         }
 
 
-
         List<TicketCategory> ticketCategories = ticketCategoryRepo.findByEventId(eventId);
         if (ticketCategories.isEmpty()) {
             throw new IllegalArgumentException("Event has no ticket categories");
@@ -146,12 +227,12 @@ public class EventService {
         if (eventMemberList.isEmpty()) {
             throw new IllegalArgumentException("Event has no members");
         }
-        List<Long> memberList = eventMemberList.stream().map(EventMember::getUserId).toList();
+        List<String> memberEmailList = eventMemberList.stream().map(EventMember::getEmail).toList();
 
         event.setStatus(EventStatus.PUBLISHED);
 
-        eventServicePublisher.publishEventApprovedInventory(eventId,ticketCategories, event.getName(), event.getOrganizerId(), event.getOrganizerName(), event.getOrganizerEmail());
-        eventServicePublisher.publishEventApprovedMember(eventId, memberList);
+        eventServicePublisher.publishEventApprovedInventory(eventId, ticketCategories, event.getName(), event.getOrganizerId(), event.getOrganizerName(), event.getOrganizerEmail());
+        eventServicePublisher.publishEventApprovedMember(eventId, memberEmailList);
 
         //TODO: do something that user can see event on web
 

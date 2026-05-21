@@ -16,20 +16,21 @@ public class EventAuthLogic {
         if (auth == null) return false;
 
         Long userId = Long.parseLong(auth.getToken().getSubject());
-        return eventMemberRepository.existsByUserIdAndEventId(eventId, userId, EventRole.ORGANIZER);
+        String email = auth.getToken().getClaimAsString("email");
+        return eventMemberRepository.existsByUserEmailAndEventId(email, eventId, EventRole.ORGANIZER);
     }
 
     public boolean isInspector( Long eventId, JwtAuthenticationToken auth) {
         if (auth == null) return false;
 
-        Long userId = Long.parseLong(auth.getToken().getSubject());
-        return eventMemberRepository.existsByUserIdAndEventId(eventId, userId, EventRole.INSPECTOR);
+        String email = auth.getToken().getClaimAsString("email");
+        return eventMemberRepository.existsByUserEmailAndEventId(email, eventId, EventRole.INSPECTOR);
     }
 
     public boolean isAttendee(Long eventId, JwtAuthenticationToken auth) {
         if (auth == null) return false;
 
-        Long userId = Long.parseLong(auth.getToken().getSubject());
-        return eventMemberRepository.existsByUserIdAndEventId(eventId, userId, EventRole.ATTENDEE);
+        String email = auth.getToken().getClaimAsString("email");
+        return eventMemberRepository.existsByUserEmailAndEventId(email, eventId, EventRole.ATTENDEE);
     }
 }

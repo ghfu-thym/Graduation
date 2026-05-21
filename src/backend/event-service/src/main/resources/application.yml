@@ -31,7 +31,7 @@ spring:
       # - Nếu bảng chưa có -> Tự tạo.
       # - Nếu thiếu cột -> Tự thêm.
       # (Rất tiện cho giai đoạn code Khóa luận)
-      ddl-auto: create
+      ddl-auto: update
 
     # In câu SQL ra console để bạn debug xem Hibernate đang làm gì
     show-sql: true
@@ -73,5 +73,7 @@ app:
 # Cấu hình logging để dễ nhìn lỗi
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE # Xem giá trị tham số ? trong câu SQL
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.web: DEBUG
+    org.springframework.security: TRACE

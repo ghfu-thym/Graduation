@@ -1,6 +1,7 @@
 package com.spike.ticket.repository;
 
 import com.spike.ticket.entity.Event;
+import com.spike.ticket.enums.EventStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -8,6 +9,9 @@ import java.util.List;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
     Event findByEventId(Long eventId);
+
+    List<Event> findEventByStatus(EventStatus status);
+
 
     List<Event> findByTicketOpenTimeBetween(LocalDateTime from, LocalDateTime to);
 }

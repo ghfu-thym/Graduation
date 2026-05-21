@@ -38,7 +38,7 @@ public class EventServicePublisher {
         log.info("[Kafka] Event approved message published for eventId: {}", eventId);
     }
 
-    public void publishEventApprovedMember(Long eventId, List<Long> memberIds) {
+    public void publishEventApprovedMember(Long eventId, List<String> memberIds) {
 
         kafkaTemplate.send(TOPIC_EVENT_APPROVED_MEMBER, eventId.toString(), new EventApprovedMemberMessage(eventId, memberIds));
 

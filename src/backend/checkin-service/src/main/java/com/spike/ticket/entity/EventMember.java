@@ -6,7 +6,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "event_members", indexes = {
-        @Index(name = "idx_event_user", columnList = "event_id, user_id", unique = true)
+        @Index(name = "idx_event_email", columnList = "event_id, email", unique = true)
 })
 @Getter
 @Setter
@@ -21,8 +21,8 @@ public class EventMember {
     @Column(name = "event_id", nullable = false)
     private Long eventId;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @Column(name = "emai", nullable = false)
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)

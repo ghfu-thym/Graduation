@@ -4,6 +4,6 @@ import java.util.List;
 
 public record EventApprovedMemberMessage(
         Long eventId,
-        List<Long> memberIds
+        List<String> memberEmailList
 ) {
 }

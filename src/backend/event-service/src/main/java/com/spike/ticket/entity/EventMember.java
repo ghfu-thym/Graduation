@@ -21,8 +21,8 @@ public class EventMember {
     @Column(name = "event_id", nullable = false)
     private Long eventId;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @Column(name = "email", nullable = false)
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
