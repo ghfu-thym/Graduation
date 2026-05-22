@@ -29,7 +29,7 @@ public class PaymentTransaction {
     @Builder.Default
     private String currency = "VND";
 
-    @Column(name = "payment_method", nullable = false, length = 50)
+    @Column(name = "payment_method", length = 50)
     private String paymentMethod;
 
     // Mã giao dịch từ VNPAY/Momo trả về
@@ -37,34 +37,12 @@ public class PaymentTransaction {
     private String providerTransactionId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", length = 20)
     private PaymentStatus status;
 
-    // Khóa duy nhất để chặn Cổng thanh toán gọi Webhook nhiều lần cho 1 trạng thái
-    //Khi Webhook bắn về, bạn tạo key này theo format: Webhook_{OrderId}_{ProviderTransactionId}_{Trạng thái}.
-    // Nếu cổng thanh toán spam Webhook lần thứ 2, MySQL sẽ ném lỗi DataIntegrityViolationException ngay lập tức,
-    // bảo vệ hệ thống không bị cộng tiền hay chốt ticket 2 lần
-    @Column(name = "idempotency_key", unique = true)
-    private String idempotencyKey;
 
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }
 

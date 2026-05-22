@@ -29,7 +29,7 @@ public class WebhookService {
 
 
         //Tạo khóa Redis (Distributed Lock) để chống race condition
-        String redisKey = "order_timeout:"+orderTrackingNumber;
+        String redisKey = "order_processing:"+orderTrackingNumber;
         // setIfAbsent tương đương lệnh SETNX trong Redis. Lock tồn tại trong 10 giây.
         Boolean isLocked = redisTemplate.opsForValue().setIfAbsent(redisKey, "LOCKED", Duration.ofSeconds(10));
 

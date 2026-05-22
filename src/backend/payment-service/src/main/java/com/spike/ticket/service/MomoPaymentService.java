@@ -4,6 +4,9 @@ import com.spike.ticket.dto.MoMoRefundRequest;
 import com.spike.ticket.dto.MoMoRefundResponse;
 import com.spike.ticket.dto.MomoPaymentRequest;
 import com.spike.ticket.dto.MomoPaymentResponse;
+import com.spike.ticket.entity.PaymentTransaction;
+import com.spike.ticket.enums.PaymentStatus;
+import com.spike.ticket.repository.PaymentTransactionRepository;
 import com.spike.ticket.utils.HmacUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +43,8 @@ public class MomoPaymentService {
 
     private final RestClient momoRestClient;
 
+    private final PaymentTransactionRepository paymentRepo;
+
     public String createPaymentLink(String orderTrackingNumber, Long amount) {
         String requestId = UUID.randomUUID().toString();
         String orderInfo = "Thanh toan don hang: " + orderTrackingNumber;
@@ -47,21 +52,21 @@ public class MomoPaymentService {
         String extraData = "";
         String lang = "vi";
 
-        String rawData = "accessKey="+accessKey+
-                "&amount="+amount+
-                "&extraData="+extraData+
-                "&ipnUrl="+ipnUrl+
-                "&orderId="+orderTrackingNumber+
-                "&orderInfo="+orderInfo+
-                "&partnerCode="+partnerCode+
-                "&redirectUrl="+redirectUrl+
-                "&requestId="+requestId+
-                "&requestType="+requestType;
+        String rawData = "accessKey=" + accessKey +
+                "&amount=" + amount +
+                "&extraData=" + extraData +
+                "&ipnUrl=" + ipnUrl +
+                "&orderId=" + orderTrackingNumber +
+                "&orderInfo=" + orderInfo +
+                "&partnerCode=" + partnerCode +
+                "&redirectUrl=" + redirectUrl +
+                "&requestId=" + requestId +
+                "&requestType=" + requestType;
 
         System.out.println(rawData);
         String signature = HmacUtils.signHmacSha256(rawData, secretKey);
 
-        MomoPaymentRequest  request = MomoPaymentRequest.builder()
+        MomoPaymentRequest request = MomoPaymentRequest.builder()
                 .partnerCode(partnerCode)
                 .requestId(requestId)
                 .requestType(requestType)
@@ -75,6 +80,13 @@ public class MomoPaymentService {
                 .signature(signature)
                 .build();
 
+        PaymentTransaction transaction = PaymentTransaction.builder()
+                .orderTrackingNumber(orderTrackingNumber)
+                .amount(amount)
+                .status(PaymentStatus.PENDING)
+                .build();
+        paymentRepo.save(transaction);
+
         // bắn sang server momo
         try {
             log.info("Sending payment request to Momo: {}", request);
@@ -84,7 +96,7 @@ public class MomoPaymentService {
                     .retrieve()
                     .body(MomoPaymentResponse.class);
 
-            if (response != null && response.getResultCode() == 0){
+            if (response != null && response.getResultCode() == 0) {
                 return response.getPayUrl(); // link thanh toan thanh cong
             } else {
                 log.error("Error from Momo: {}", response != null ? response.getMessage() : "Unknown");
@@ -96,7 +108,7 @@ public class MomoPaymentService {
         }
     }
 
-    public MoMoRefundResponse refundPayment(String originalOrderId,String transactionId, Long amount){
+    public MoMoRefundResponse refundPayment(String originalOrderId, String transactionId, Long amount) {
         Long transId = Long.parseLong(transactionId);
         String requestId = UUID.randomUUID().toString();
 
