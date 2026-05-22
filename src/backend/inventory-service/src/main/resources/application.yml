@@ -5,10 +5,21 @@ spring:
     name: inventory-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/ticket_service_db
-    username: ticket_user
-    password: ticket_password
-    driver-class-name: org.postgresql.Driver
+    # URL kết nối MySQL.
+    # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có (Tiện lợi)
+    # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
+    # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
+    url: jdbc:mysql://localhost:3306/ticket_service?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: root
+    password: 3307a001
+
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 5000ms
+      password: your_redis_password
 
   jpa:
     # open-in-view: false (Best practice)
@@ -28,7 +39,7 @@ spring:
     properties:
       hibernate:
         format_sql: true # Format câu SQL cho đẹp dễ nhìn
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.MySQLDialect
 
   kafka:
     bootstrap-servers: localhost:9092
@@ -36,8 +47,12 @@ spring:
       group-id: ticket-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+#        spring.json.use.type.headers: false
+#        spring.json.value.default.type: com.spike.ticket.dto.event.InitInventoryMessage
         spring.json.trusted.packages: "*"
 # Cấu hình logging để dễ nhìn lỗi
 logging:

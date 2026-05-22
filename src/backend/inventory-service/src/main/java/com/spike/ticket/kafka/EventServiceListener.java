@@ -1,7 +1,7 @@
 package com.spike.ticket.kafka;
 
-import com.spike.ticket.dto.event.EventApprovedMessage;
-import com.spike.ticket.dto.event.InitInventoryMessage;
+import com.spike.ticket.dto.EventApprovedInventoryMessage;
+import com.spike.ticket.dto.InitInventoryMessage;
 import com.spike.ticket.repository.TicketCategoryRepo;
 import com.spike.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +16,8 @@ public class EventServiceListener {
     private final TicketService ticketService;
     private final TicketCategoryRepo ticketCategoryRepo;
 
-    @KafkaListener(topics = "event-approved-events", groupId = "ticket-group")
-    public void handleEventApproved (EventApprovedMessage message) {
+    @KafkaListener(topics = "event-approved-inventory", groupId = "ticket-group")
+    public void handleEventApproved (EventApprovedInventoryMessage message) {
         log.info("[Kafka listener] Received event approved message: {}", message);
 
         try {

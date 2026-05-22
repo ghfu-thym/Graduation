@@ -2,8 +2,8 @@ package com.spike.ticket.service;
 
 
 import com.spike.ticket.dto.*;
-import com.spike.ticket.dto.event.EventApprovedMessage;
-import com.spike.ticket.dto.event.TicketCategoryDTO;
+import com.spike.ticket.dto.EventApprovedInventoryMessage;
+import com.spike.ticket.dto.TicketCategoryDTO;
 import com.spike.ticket.entity.InventoryTicket;
 import com.spike.ticket.entity.ProcessedOrder;
 import com.spike.ticket.entity.TicketCategory;
@@ -60,7 +60,7 @@ public class TicketService {
 
         List<CategoryItem> categoryItemList = request.getCategoryItemList();
 
-        // 1. Chuyển đổi List input thành mảng KEYS và ARGV cho Redis
+        //chuyển đổi list input thành mảng KEYS và ARGV cho redis
         for (CategoryItem item : categoryItemList) {
             // VD: ticket:category:1:stock
             keys.add("ticket:category:" + item.getTicketCategoryId().toString() + ":stock");
@@ -68,13 +68,23 @@ public class TicketService {
             args.add(String.valueOf(item.getQuantity()));
         }
 
-        // 2. Thực thi Lua Script
-        // Redis sẽ đảm bảo khóa luồng, không ai chen ngang được vào thao tác này
-        Long result = redisTemplate.execute(reserveScript, keys, args.toArray());
+        log.info("Reserve ticket key: {} ", keys);
+        Long result = 0L;
+
+        // chạu lua scrpt
+        try {
+            result = redisTemplate.execute(reserveScript, keys, args.toArray());
+        } catch (Exception e) {
+            log.error("Error executing reserve ticket script", e);
+            log.error("keys={} args={}", keys, args);
+
+            throw new RuntimeException(e);
+        }
+        log.info("Reserve ticket result: {} for keys {}", result, keys);
 
 
-        // 3. Xử lý kết quả
-        if (result != null && result == 0L) {
+        // xử lý kết quả
+        if (result != 0L) {
             return new TicketReservationResponse(true, null);
 
         } else {
@@ -97,18 +107,25 @@ public class TicketService {
         List<CategoryItem> categoryItemList = request.getCategoryItems();
 
         for (CategoryItem item : categoryItemList) {
-            keys.add("ticket:category:" + item.getTicketCategoryId().toString() + "stock");
+            keys.add("ticket:category:" + item.getTicketCategoryId().toString() + ":stock");
             args.add(String.valueOf(item.getQuantity()));
         }
 
 
-        Long result = redisTemplate.execute(initScript, keys, args.toArray());
+        Long result = 0L;
+        try {
+            result = redisTemplate.execute(releaseScript, keys, args.toArray());
+        } catch (Exception e) {
+            log.error("Error executing release ticket script", e);
+            log.error("keys={} args={}", keys, args);
+            throw new RuntimeException(e);
+        }
 
-        if (result == 1L) {
-            log.info("Released ticket");
+        if (result == 0) {
+            log.error("Failed to release ticket");
 
         } else {
-            log.warn("Failed to release ticket");
+            log.warn("Successfully released");
 
         }
 
@@ -146,10 +163,11 @@ public class TicketService {
     }
 
     @Transactional
-    public void handleEventApproved (EventApprovedMessage message) {
+    public void handleEventApproved (EventApprovedInventoryMessage message) {
         for (TicketCategoryDTO ticketCategoryDTO: message.ticketCategories()){
             // lưu vào TicketCategory
             TicketCategory ticketCategory = TicketCategory.builder()
+                    .id(ticketCategoryDTO.categoryId())
                     .eventId(message.eventId())
                     .name(ticketCategoryDTO.name())
                     .price(ticketCategoryDTO.price())
@@ -177,16 +195,24 @@ public class TicketService {
         List<String> args = new ArrayList<>();
 
         for (TicketCategory ticketCategory : ticketCategories) {
-            keys.add("ticket:category:" + ticketCategory.getId().toString() + "stock");
+            keys.add("ticket:category:" + ticketCategory.getId().toString() + ":stock");
             args.add(String.valueOf(ticketCategory.getQuantity()));
         }
 
+        log.info("keys: {}", keys);
+
         Long result = redisTemplate.execute(initScript, keys, args.toArray());
+        log.info("result: {}", result);
+
+        String sampleValue = redisTemplate.opsForValue().get(keys.get(0));
+        log.info("sample redis value={}", sampleValue);
 
         if (result >0){
             log.info("Init {} ticket categories success for event: {}", result, eventId);
         } else {
             log.info("Categories already init for event: {}" , eventId);
         }
+
+        log.info(redisTemplate.getConnectionFactory().getConnection().ping());
     }
 }

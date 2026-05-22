@@ -6,6 +6,7 @@ import com.spike.ticket.dto.ReserveTicketRequest;
 import com.spike.ticket.dto.TicketReservationResponse;
 import com.spike.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("api/v1/tickets")
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class InventoryController {
 
     @PostMapping("/reserve")
     public ResponseEntity<TicketReservationResponse> reserveTickets(@RequestBody ReserveTicketRequest request){
+        log.info("Received reserve ticket request: {}", request);
         try {
 
             return ResponseEntity.ok(ticketService.reserveTicket(request));
@@ -31,7 +34,11 @@ public class InventoryController {
 
     @PostMapping("/release")
     public ResponseEntity<?> releaseTickets(@RequestBody ReleaseTicketRequest request){
-        ticketService.releaseTickets(request);
+        try {
+            ticketService.releaseTickets(request);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
         return ResponseEntity.ok().build();
     }
 

@@ -2,8 +2,8 @@ package com.spike.ticket.kafka;
 
 import com.spike.ticket.dto.ConfirmTicketRequest;
 import com.spike.ticket.dto.ReleaseTicketRequest;
-import com.spike.ticket.dto.event.OrderCancelledEvent;
-import com.spike.ticket.dto.event.OrderConfirmedEvent;
+import com.spike.ticket.dto.OrderCancelledEvent;
+import com.spike.ticket.dto.OrderConfirmedEvent;
 import com.spike.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
