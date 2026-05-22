@@ -29,6 +29,5 @@ for i = 1, #KEYS do
     redis.call('DECRBY', KEYS[i], requested_quantity)
 end
 
-return 0 -- Thành công giữ chỗ!
 
 return 1 -- Thành công giữ chỗ!
