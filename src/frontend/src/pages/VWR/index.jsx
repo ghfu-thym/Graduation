@@ -124,9 +124,10 @@ const Vwr = ({ eventId }) => {
           if (currentPositionRef.current !== newRank) {
             currentPositionRef.current = newRank;
           }
-        } else if (wsData.action === "token_granted" && wsData.accessToken) {
-          handleSuccess(wsData.accessToken);
+        } else if (wsData.action === "ticket_granted" && wsData.passToken) {
+          handleSuccess(wsData.passToken);
           ws.close();
+          console.log("received from ws")
         } else if (wsData.action === "error") {
           handleError(wsData.message || "Lỗi không xác định từ hàng đợi.");
         }
@@ -222,9 +223,15 @@ const Vwr = ({ eventId }) => {
             </h1>
             <div className="relative w-20 h-20 flex items-center justify-center my-space-1 z-10">
               <div className="absolute inset-0 rounded-full border-2 border-gray-200 opacity-50"></div>
-              <div className="absolute inset-0 rounded-full border-t-2 border-r-2 border-neon-green" style={{ transform: "rotate(45deg)" }}></div>
+              <div
+                className="absolute inset-0 rounded-full border-t-2 border-r-2 border-neon-green hourglass-ring-spin"
+                style={{ transform: "rotate(45deg)" }}
+              ></div>
               <div className="absolute inset-0 rounded-full bg-neon-green/5 blur-xl"></div>
-              <span className="material-symbols-outlined text-4xl text-neon-green" style={{ fontVariationSettings: "'FILL' 0" }}>
+              <span
+                className="material-symbols-outlined text-4xl text-neon-green"
+                style={{ fontVariationSettings: "'FILL' 0" }}
+              >
                 hourglass_empty
               </span>
             </div>

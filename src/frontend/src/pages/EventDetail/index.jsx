@@ -81,10 +81,11 @@ const EventDetail = ({ eventId }) => {
 
   const handleBuyTicket = () => {
     const authToken = localStorage.getItem("authToken");
+    const eventRoute = `#/event/${eventId || "1"}`;
     const nextRoute = `#/vwr/${eventId || "1"}`;
 
     if (!authToken) {
-      localStorage.setItem("postLoginRedirect", nextRoute);
+      localStorage.setItem("postLoginRedirect", eventRoute);
       window.location.hash = "#/login";
       return;
     }
