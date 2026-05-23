@@ -57,6 +57,9 @@ public class Event {
     @Column
     private Boolean isOpened;
 
+    @Column
+    private int shardCount;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

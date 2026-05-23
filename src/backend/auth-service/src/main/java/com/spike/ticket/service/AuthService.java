@@ -37,7 +37,7 @@ public class AuthService {
                 .build();
 
         userRepo.save(user);
-        return "User registered successfully for user: " + user.getUsername();
+        return jwtService.generateToken(user);
     }
 
     public String login(LoginRequest request) {

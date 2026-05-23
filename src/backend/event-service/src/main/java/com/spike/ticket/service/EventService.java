@@ -30,6 +30,9 @@ public class EventService {
     private final EventServicePublisher eventServicePublisher;
     private final TicketCategoryRepo ticketCategoryRepo;
     private final S3Service s3Service;
+    private final DynamoService dynamoService;
+
+    private final int SHARD_SIZE = 50;
 
 
     public EventDetail getEventById(Long eventId) {
@@ -42,7 +45,7 @@ public class EventService {
                 ? (event.getImageUrls() == null ? List.of() : event.getImageUrls())
                 : orderedImages.stream().map(EventImage::getImageUrl).toList();
 
-        List<CreateCategoryRequest> categoryItems = getTicketCategoryByEventId(eventId);
+        List<TicketCategory> ticketCategories = ticketCategoryRepo.findByEventId(eventId);
 
         return EventDetail.builder()
                 .id(event.getEventId())
@@ -52,7 +55,8 @@ public class EventService {
                 .endTime(event.getEndTime())
                 .description(event.getDescription())
                 .imageUrls(imageUrls)
-                .categoryItemList(categoryItems)
+                .categoryItemList(ticketCategories)
+                .shardCount(event.getShardCount())
                 .createdAt(event.getCreatedAt())
                 .build();
     }
@@ -84,20 +88,9 @@ public class EventService {
         return summarizeList;
     }
 
-    // tan dung dto
-    public List<CreateCategoryRequest> getTicketCategoryByEventId(Long eventId) {
-        List<TicketCategory> ticketCategoryList = ticketCategoryRepo.findByEventId(eventId);
-        List<CreateCategoryRequest> requestList = new ArrayList<>();
-        for (TicketCategory category : ticketCategoryList) {
-            CreateCategoryRequest request = CreateCategoryRequest.builder()
-                    .name(category.getName())
-                    .price(category.getPrice())
-                    .quantity(category.getQuantity())
-                    .description(category.getDescription())
-                    .build();
-            requestList.add(request);
-        }
-        return requestList;
+    // tan dung entity
+    public List<TicketCategory> getTicketCategoryByEventId(Long eventId) {
+        return ticketCategoryRepo.findByEventId(eventId);
     }
 
     @Transactional
@@ -116,6 +109,7 @@ public class EventService {
                 .location(request.getLocation())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
+                .ticketOpenTime(request.getTicketOpenTime())
                 .status(EventStatus.DRAFT)
                 .isOpened(false)
                 .description(request.getDescription())
@@ -141,6 +135,7 @@ public class EventService {
         }
 
         List<CreateCategoryRequest> requestList = request.getTicketCategoryList();
+        int totalGuest = 0;
         for (CreateCategoryRequest categoryRequest : requestList) {
             TicketCategory category = TicketCategory.builder()
                     .eventId(savedEvent.getEventId())
@@ -149,8 +144,11 @@ public class EventService {
                     .quantity(categoryRequest.getQuantity())
                     .description(categoryRequest.getDescription())
                     .build();
+            totalGuest += categoryRequest.getQuantity();
             ticketCategoryRepo.save(category);
         }
+
+        savedEvent.setShardCount(totalGuest/SHARD_SIZE + 1);
 
         // thêm ORGANIZER
         EventMember eventMember = EventMember.builder()
@@ -234,7 +232,8 @@ public class EventService {
         eventServicePublisher.publishEventApprovedInventory(eventId, ticketCategories, event.getName(), event.getOrganizerId(), event.getOrganizerName(), event.getOrganizerEmail());
         eventServicePublisher.publishEventApprovedMember(eventId, memberEmailList);
 
-        //TODO: do something that user can see event on web
+        // init config on VWR
+        dynamoService.updateEventStatus(eventId.toString(), "NORMAL", event.getShardCount());
 
         eventRepository.save(event);
     }

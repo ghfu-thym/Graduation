@@ -26,6 +26,8 @@ public class JwtService {
                     // nhét system role và userId
                     .setSubject(String.valueOf(user.getId()))
                     .claim("role",user.getRole().toString() )
+                    .claim("email",user.getEmail())
+                    .claim("username",user.getUsername())
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                     .signWith(privateKey, SignatureAlgorithm.RS256)

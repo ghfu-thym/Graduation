@@ -1,6 +1,7 @@
 package com.spike.ticket.controller;
 
 import com.spike.ticket.dto.*;
+import com.spike.ticket.entity.TicketCategory;
 import com.spike.ticket.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}/ticket-categories")
-    public ResponseEntity<List<CreateCategoryRequest>> getTicketCategoryByEventId(@PathVariable Long eventId){
+    public ResponseEntity<List<TicketCategory>> getTicketCategoryByEventId(@PathVariable Long eventId){
         log.info("Get ticket category by event id: {}", eventId);
         try {
             return ResponseEntity.ok()

@@ -19,6 +19,12 @@ spring:
     password: 3307a001
 
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 5000ms
+      password: your_redis_password
 
   jpa:
     # open-in-view: false (Best practice)

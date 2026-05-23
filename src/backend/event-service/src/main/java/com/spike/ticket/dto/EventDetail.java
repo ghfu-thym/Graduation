@@ -1,5 +1,6 @@
 package com.spike.ticket.dto;
 
+import com.spike.ticket.entity.TicketCategory;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class EventDetail {
     private LocalDateTime endTime;
     private String description;
     private List<String> imageUrls;
-    List<CreateCategoryRequest> categoryItemList;
+    List<TicketCategory> categoryItemList;
+    private int shardCount;
     private LocalDateTime createdAt;
 }

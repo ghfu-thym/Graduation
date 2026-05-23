@@ -3,6 +3,7 @@ package com.spike.ticket.dto;
 import com.spike.ticket.entity.TicketCategory;
 
 public record TicketCategoryDTO(
+        Long categoryId,
         Long eventId,
         String name,
         Long price,
@@ -11,6 +12,7 @@ public record TicketCategoryDTO(
 ) {
     public static TicketCategoryDTO fromEntity(TicketCategory entity) {
         return new TicketCategoryDTO(
+                entity.getId(),
                 entity.getEventId(),
                 entity.getName(),
                 entity.getPrice(),
