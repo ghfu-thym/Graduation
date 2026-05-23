@@ -1,6 +1,6 @@
 package com.spike.ticket.dto.request;
 
-import com.spike.ticket.dto.event.CategoryItem;
+import com.spike.ticket.dto.CategoryItem;
 import lombok.Data;
 
 import java.util.List;
@@ -9,5 +9,5 @@ import java.util.List;
 public class ReserveTicketRequest {
     private Long eventID;
 
-    private List<CategoryItem> ticketCategories;
+    private List<CategoryItem> categoryItemList;
 }

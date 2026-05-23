@@ -1,6 +1,6 @@
 package com.spike.ticket.kafka.listener;
 
-import com.spike.ticket.dto.event.PaymentSuccessEvent;
+import com.spike.ticket.dto.PaymentSuccessEvent;
 import com.spike.ticket.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

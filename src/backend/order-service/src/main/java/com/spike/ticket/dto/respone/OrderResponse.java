@@ -13,4 +13,5 @@ public class OrderResponse {
     private String status;
     private Long totalPrice;
     private LocalDateTime createdAt;
+    private String paymentUrl;
 }

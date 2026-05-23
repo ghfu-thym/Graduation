@@ -16,7 +16,7 @@ spring:
     # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có (Tiện lợi)
     # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
     # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
-    url: jdbc:mysql://localhost:3306/ticket_orders?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://localhost:3306/order_service?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: 3307a001
 
@@ -47,6 +47,7 @@ spring:
       host: localhost
       port: 6379
       timeout: 5000ms
+      password: your_redis_password
 
   kafka:
     bootstrap-servers: localhost:9092
@@ -69,3 +70,7 @@ logging:
 app:
   ticket:
     hmac-secret: "${TICKET_HMAC_SECRET:TckS3cr3t2026!HighLoadSystem@Phuoc#99}"
+  aws:
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
+    region: ap-southeast-1

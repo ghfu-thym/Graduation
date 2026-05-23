@@ -1,6 +1,4 @@
-package com.spike.ticket.dto.event;
-
-import com.spike.ticket.dto.CategoryItem;
+package com.spike.ticket.dto;
 
 import java.util.List;
 

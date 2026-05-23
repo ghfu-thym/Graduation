@@ -1,14 +1,12 @@
 package com.spike.ticket.kafka.publisher;
 
-import com.spike.ticket.dto.event.OrderCancelledEvent;
-import com.spike.ticket.dto.event.OrderConfirmedEvent;
-import com.spike.ticket.dto.event.OrderRefundEvent;
-import com.spike.ticket.dto.event.TicketCreatedEvent;
+import com.spike.ticket.dto.OrderCancelledEvent;
+import com.spike.ticket.dto.OrderConfirmedEvent;
+import com.spike.ticket.dto.OrderRefundEvent;
+import com.spike.ticket.dto.TicketCreatedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @Slf4j
@@ -45,8 +43,8 @@ public class OrderEventPublisher {
 
     public void ticketCreated(TicketCreatedEvent event){
 
-        kafkaTemplate.send(TOPIC_TICKET_CREATED, event.ticketNumber(), event);
-        log.info("[Kafka] Ticket created event published for ticketId: {}", event.ticketNumber());
+        kafkaTemplate.send(TOPIC_TICKET_CREATED, event.orderTrackingNumber(), event);
+        log.info("[Kafka] Ticket created event published for ticketId: {}", event.orderTrackingNumber());
     }
 }
 
