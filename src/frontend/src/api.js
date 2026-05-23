@@ -100,3 +100,18 @@ export const register = (payload) => {
     },
   });
 };
+
+export const reserveOrder = (payload) => {
+  const vwrAccessToken = localStorage.getItem('vwr_pass_token') || '';
+  const authToken = getAuthToken();
+
+  return axios.post(`${API_BASE_URL}/orders/reserve`, payload, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
+      'x-vwr-pass': vwrAccessToken,
+      "Bypass-Tunnel-Reminder": "true",
+      "ngrok-skip-browser-warning": "true"
+    },
+  });
+};

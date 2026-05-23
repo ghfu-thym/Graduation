@@ -1,12 +1,42 @@
 import React, { useEffect, useState } from 'react';
 
+const decodeJwtPayload = (token) => {
+    if (!token) return null;
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    try {
+        const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        const padded = base64.padEnd(base64.length + (4 - (base64.length % 4 || 4)) % 4, "=");
+        const json = JSON.parse(window.atob(padded));
+        return json;
+    } catch (error) {
+        return null;
+    }
+};
+
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [username, setUsername] = useState('');
 
     useEffect(() => {
         const syncUsername = () => {
-            const storedName = localStorage.getItem('authUsername') || '';
+            const authToken = localStorage.getItem('authToken') || '';
+            let storedName = localStorage.getItem('authUsername') || '';
+
+            if (!authToken) {
+                setUsername('');
+                return;
+            }
+
+            if (!storedName) {
+                const payload = decodeJwtPayload(authToken);
+                const fallbackName = payload?.username || payload?.sub || payload?.email || '';
+                if (fallbackName) {
+                    localStorage.setItem('authUsername', fallbackName);
+                    storedName = fallbackName;
+                }
+            }
+
             setUsername(storedName);
         };
 
@@ -61,9 +91,14 @@ const Header = () => {
                             )}
                         </div>
                     )}
-                    <a href="#/login" className="bg-transparent border border-neon-green text-neon-green rounded-full px-6 py-2 text-sm font-bold hover:bg-neon-green hover:text-background transition-colors">
-                        Tài khoản
-                    </a>
+                    {!username && (
+                        <a
+                            href="#/login"
+                            className="bg-transparent border border-neon-green text-neon-green rounded-full px-6 py-2 text-sm font-bold hover:bg-neon-green hover:text-background transition-colors"
+                        >
+                            Tài khoản
+                        </a>
+                    )}
                     <button className="md:hidden text-black">
                         <span className="material-symbols-outlined">menu</span>
                     </button>

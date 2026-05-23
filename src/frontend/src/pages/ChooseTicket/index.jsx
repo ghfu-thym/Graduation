@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { reserveOrder } from "../../api";
 
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return "";
@@ -21,6 +22,8 @@ const formatDateTime = (value) => {
 
 const ChooseTicket = () => {
   const [quantities, setQuantities] = useState({});
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const eventSnapshot = useMemo(() => {
     try {
@@ -72,6 +75,54 @@ const ChooseTicket = () => {
       return sum + quantity * price;
     }, 0);
   }, [ticketCategories, quantities]);
+
+  const handleReserveOrder = async () => {
+    setSubmitError("");
+
+    const selectedItems = ticketCategories
+      .map((category, index) => {
+        const key = String(category.id ?? category.name ?? index);
+        const quantity = quantities[key] ?? 0;
+        return {
+          ticketCategoryId: category.id,
+          quantity,
+        };
+      })
+      .filter((item) => item.quantity > 0 && item.ticketCategoryId !== undefined && item.ticketCategoryId !== null);
+
+    if (!selectedItems.length) {
+      setSubmitError("Vui lòng chọn ít nhất 1 vé trước khi tiếp tục thanh toán.");
+      return;
+    }
+
+    if (!eventSnapshot?.id) {
+      setSubmitError("Không tìm thấy thông tin sự kiện để đặt vé.");
+      return;
+    }
+
+    const payload = {
+      eventId: eventSnapshot.id,
+      eventName: eventSnapshot?.name || "",
+      categoryItems: selectedItems,
+    };
+
+    try {
+      setIsSubmitting(true);
+      const response = await reserveOrder(payload);
+
+      if (response?.status === 201 && response?.data?.paymentUrl) {
+        window.location.href = response.data.paymentUrl;
+        return;
+      }
+
+      setSubmitError(`Không thể khởi tạo thanh toán. ${JSON.stringify(response?.data)}`);
+    } catch (error) {
+      const errorData = error?.response?.data ?? error?.message ?? "";
+      setSubmitError(`Không thể khởi tạo thanh toán. ${JSON.stringify(errorData)}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const eventTitle = eventSnapshot?.name || "Sự kiện";
   const eventLocation = eventSnapshot?.location || "";
@@ -183,12 +234,17 @@ const ChooseTicket = () => {
               <span className="font-heading-3 text-heading-3 text-gray-900">
                 {formatCurrency(totalAmount)} VNĐ
               </span>
+              {submitError && (
+                <span className="mt-space-2 text-sm text-red-600 text-center md:text-left">{submitError}</span>
+              )}
             </div>
             <button
               type="button"
-              className="bg-[#36F4A4] text-black font-body-large text-body-large rounded-full px-[26px] py-[12px] flex items-center gap-space-2 hover:bg-[#28d68c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#36F4A4] focus:ring-offset-2 focus:ring-offset-white w-full md:w-auto justify-center"
+              onClick={handleReserveOrder}
+              disabled={isSubmitting}
+              className="bg-[#36F4A4] text-black font-body-large text-body-large rounded-full px-[26px] py-[12px] flex items-center gap-space-2 hover:bg-[#28d68c] transition-colors focus:outline-none focus:ring-2 focus:ring-[#36F4A4] focus:ring-offset-2 focus:ring-offset-white w-full md:w-auto justify-center disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Tiếp tục thanh toán
+              {isSubmitting ? "Đang xử lý..." : "Tiếp tục thanh toán"}
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>
                 arrow_forward
               </span>

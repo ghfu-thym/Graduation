@@ -26,6 +26,12 @@ const Vwr = ({ eventId }) => {
       return null;
     }
   }, []);
+  const resolvedShardCount = useMemo(() => {
+    const rawCount = eventSnapshot?.shardCount;
+    const parsed = Number(rawCount);
+    if (!Number.isFinite(parsed) || parsed <= 0) return 1;
+    return Math.floor(parsed);
+  }, [eventSnapshot]);
 
   const eventTitle = eventSnapshot?.name || "Sự kiện đang chờ";
   const eventLocation = eventSnapshot?.location || "";
@@ -74,6 +80,7 @@ const Vwr = ({ eventId }) => {
   const handleSuccess = (token) => {
     showScreen("success");
     setAccessToken(token);
+    console.log("Access token received:", token);
     localStorage.setItem("vwr_pass_token", token);
     window.setTimeout(() => {
       window.location.hash = `#/choose-ticket/${resolvedEventId}`;
@@ -102,7 +109,7 @@ const Vwr = ({ eventId }) => {
         action: "register",
         visitorToken,
         eventId,
-        shardCount: 1,
+        shardCount: resolvedShardCount,
       };
       ws.send(JSON.stringify(registerPayload));
       console.log("sent to ws")

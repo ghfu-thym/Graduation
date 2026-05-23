@@ -97,6 +97,7 @@ const EventDetail = ({ eventId }) => {
         startTime: eventDetail.startTime,
         imageUrl: eventDetail.imageUrls?.[0] || "",
         categoryItemList: eventDetail.categoryItemList || [],
+        shardCount: eventDetail.shardCount ?? 1,
       };
       localStorage.setItem("vwr_event_snapshot", JSON.stringify(snapshot));
     }
