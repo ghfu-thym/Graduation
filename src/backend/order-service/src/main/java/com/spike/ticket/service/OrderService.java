@@ -5,7 +5,7 @@ import com.spike.ticket.dto.respone.OrderResponse;
 import org.springframework.data.domain.Page;
 
 public interface OrderService {
-    OrderResponse createOrder(CreateOrderRequest request, Long userId);
+    OrderResponse createOrder(CreateOrderRequest request, Long userId, String email, String username);
 
     OrderResponse getOrderByTrackingNumber(String trackingNumber);
 

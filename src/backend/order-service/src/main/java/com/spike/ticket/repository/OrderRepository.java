@@ -31,4 +31,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Tìm băn tracking id
     Optional<Order> findByOrderTrackingNumber(String orderTrackingNumber);
+
+    @Query("select o from Order o left join fetch o.orderItems where o.orderTrackingNumber = :tracking")
+    Optional<Order> findByTrackingWithItems(String tracking);
+
+    @Query("select count(o) from Order o where o.userId = :userId and o.status = :status")
+    int existsByUserIdAndOrderStatus(Long userId, OrderStatus status);
+
 }

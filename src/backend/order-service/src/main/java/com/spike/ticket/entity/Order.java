@@ -33,6 +33,12 @@ public class Order {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "user_name", nullable = false)
+    private String userName;
+
+    @Column(name = "user_email", nullable = false)
+    private String userEmail;
+
     @Column(name = "event_id", nullable = false)
     private Long eventId;
 

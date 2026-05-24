@@ -41,8 +41,8 @@ public class InitInventoryJob {
         List<Event> upcomingEvents = eventRepository.findByTicketOpenTimeBetween(now, threshHold);
 
         // điều kiện:
-        // 1. Đã được duyệt (PUBLISHED)
-        // 2. Chưa được đẩy lên Redis (is_opened = false)
+        // đã được duyệt (PUBLISHED)
+        // chưa được đẩy lên redis (is_opened = false)
         for (Event event : upcomingEvents) {
             if (event.getStatus() == EventStatus.PUBLISHED && !event.getIsOpened()) {
 

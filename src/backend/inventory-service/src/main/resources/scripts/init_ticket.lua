@@ -7,7 +7,7 @@ for i = 1, #KEYS do
     local quantity = tonumber(ARGV[i])
 
     -- SETNX trả về 1 nếu Key chưa tồn tại và được set thành công.
-    -- Trả về 0 nếu Key ĐÃ TỒN TẠI (Lúc này Redis sẽ bỏ qua, không ghi đè giá trị cũ)
+    -- Trả về 0 nếu đã có key
     local result = redis.call('SETNX', KEYS[i], quantity)
 
     if result == 1 then
@@ -15,5 +15,5 @@ for i = 1, #KEYS do
     end
 end
 
--- Trả về số lượng các loại vé đã được khởi tạo thành công mới
+-- trả về số lượng các loại vé đã được khởi tạo thành công mới
 return initialized_count

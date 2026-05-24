@@ -21,17 +21,33 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping
+    @PostMapping("/reserve")
     public ResponseEntity<OrderResponse> createOrder(
             @Valid @RequestBody CreateOrderRequest request,
             JwtAuthenticationToken auth) {
         Long userId = Long.parseLong(auth.getToken().getSubject());
+        String username = auth.getToken().getClaimAsString("username");
+        String email = auth.getToken().getClaimAsString("email");
         log.info("Create order request for user: {}", userId);
 
-        OrderResponse orderResponse = orderService.createOrder(request, userId);
+        try {
+            OrderResponse orderResponse = orderService.createOrder(request, userId, email, username);
+            return new ResponseEntity<>(orderResponse, HttpStatus.CREATED);
+        } catch (Exception e){
+            log.error("Error creating order: {}", e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
-        return new ResponseEntity<>(orderResponse, HttpStatus.CREATED);
     }
+
+//    @PostMapping("reserve")
+//    public ResponseEntity<String> test(
+//            @Valid @RequestBody CreateOrderRequest request, JwtAuthenticationToken auth
+//    ){
+//        Long userId = Long.parseLong(auth.getToken().getSubject());
+//        log.info("Create order request: {}, userId: {}", request, userId);
+//        return ResponseEntity.ok().build();
+//    }
 
     @GetMapping("/{trackingNumber}")
     public ResponseEntity<OrderResponse> getOrderByTrackingNumber(@PathVariable String trackingNumber){

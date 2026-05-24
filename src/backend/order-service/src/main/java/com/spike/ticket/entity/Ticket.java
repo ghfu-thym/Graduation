@@ -25,6 +25,9 @@ public class Ticket {
     @Column(nullable = false)
     private Long ticketCategoryId;
 
+    @Column(name = "category_name")
+    private String categoryName;
+
     @Column(nullable = false, unique = true)
     private String qrCode;
 }

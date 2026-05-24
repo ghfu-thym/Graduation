@@ -3,8 +3,7 @@
 
 for i = 1, #KEYS do
     local quantity_to_return = tonumber(ARGV[i])
-    -- Cộng trả lại số lượng vào Redis
     redis.call('INCRBY', KEYS[i], quantity_to_return)
 end
 
-return 1 -- Hoàn thành nhả vé
+return 1

@@ -32,7 +32,7 @@ public class TicketService {
     private final InventoryTicketRepo inventoryTicketRepo;
     private final ProcessedOrderRepository processedOrderRepo;
     private final StringRedisTemplate redisTemplate;
-    private DefaultRedisScript<Long> reserveScript;
+    private DefaultRedisScript<String> reserveScript;
     private DefaultRedisScript<Long> releaseScript;
     private DefaultRedisScript<Long> initScript;
 
@@ -41,7 +41,7 @@ public class TicketService {
     public void init() {
         reserveScript = new DefaultRedisScript<>();
         reserveScript.setLocation(new ClassPathResource("scripts/reserve_ticket.lua"));
-        reserveScript.setResultType(Long.class);
+        reserveScript.setResultType(String.class);
 
         releaseScript = new DefaultRedisScript<>();
         releaseScript.setLocation(new ClassPathResource("scripts/release_ticket.lua"));
@@ -58,6 +58,8 @@ public class TicketService {
         List<String> keys = new ArrayList<>();
         List<String> args = new ArrayList<>();
 
+        log.info("Reserve ticket request: {}", request);
+
         List<CategoryItem> categoryItemList = request.getCategoryItemList();
 
         //chuyển đổi list input thành mảng KEYS và ARGV cho redis
@@ -69,7 +71,7 @@ public class TicketService {
         }
 
         log.info("Reserve ticket key: {} ", keys);
-        Long result = 0L;
+        String result = "0";
 
         // chạu lua scrpt
         try {
@@ -84,7 +86,7 @@ public class TicketService {
 
 
         // xử lý kết quả
-        if (result != 0L) {
+        if (result.equals("1")) {
             return new TicketReservationResponse(true, null);
 
         } else {

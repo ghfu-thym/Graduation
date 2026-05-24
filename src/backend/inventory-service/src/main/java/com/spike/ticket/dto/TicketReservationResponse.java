@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class TicketReservationResponse {
     private boolean success;
-    private Long failedCategoryIndex;
+    private String failedCategoryIndex;
 }

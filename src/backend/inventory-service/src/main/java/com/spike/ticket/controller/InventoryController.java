@@ -25,8 +25,14 @@ public class InventoryController {
     public ResponseEntity<TicketReservationResponse> reserveTickets(@RequestBody ReserveTicketRequest request){
         log.info("Received reserve ticket request: {}", request);
         try {
+            TicketReservationResponse response = ticketService.reserveTicket(request);
 
-            return ResponseEntity.ok(ticketService.reserveTicket(request));
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response);
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
         }

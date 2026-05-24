@@ -1,18 +1,18 @@
-package redis;
+package com.spike.ticket.redis;
 
 import com.spike.ticket.client.TicketClient;
-import com.spike.ticket.dto.event.CategoryItem;
-import com.spike.ticket.dto.event.OrderCancelledEvent;
-import com.spike.ticket.dto.event.OrderConfirmedEvent;
-import com.spike.ticket.dto.request.ReleaseTicketRequest;
+import com.spike.ticket.dto.CategoryItem;
+import com.spike.ticket.dto.OrderCancelledEvent;
 import com.spike.ticket.entity.Order;
 import com.spike.ticket.entity.OrderItem;
 import com.spike.ticket.enums.OrderStatus;
 import com.spike.ticket.kafka.publisher.OrderEventPublisher;
 import com.spike.ticket.repository.OrderRepository;
+import com.spike.ticket.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.connection.Message;
@@ -26,12 +26,12 @@ import java.util.List;
 public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
 
     private final OrderRepository orderRepository;
-    private final TicketClient ticketClient;
+    private final OrderService orderService;
     private final OrderEventPublisher orderEventPublisher;
-    public OrderTimeOutListener(RedisMessageListenerContainer listenerContainer, OrderRepository orderRepository, TicketClient ticketClient, OrderEventPublisher orderEventPublisher) {
+    public OrderTimeOutListener(RedisMessageListenerContainer listenerContainer, OrderRepository orderRepository, OrderService orderService, OrderEventPublisher orderEventPublisher) {
         super(listenerContainer);
         this.orderRepository = orderRepository;
-        this.ticketClient = ticketClient;
+        this.orderService = orderService;
         this.orderEventPublisher = orderEventPublisher;
     }
 
@@ -59,33 +59,14 @@ public class OrderTimeOutListener extends KeyExpirationEventMessageListener {
                 order.setStatus(OrderStatus.TIMEOUT);
                 orderRepository.save(order);
 
-                log.info("Order with tracking number: {} is changed to timeout!", orderTrackingNumber);
+                orderService.cancelOrder(orderTrackingNumber);
+                log.info("Order with tracking number: {} is changed to cancelled!", orderTrackingNumber);
 
-                    try{
-                        orderEventPublisher.publishOrderCancelled(mapToOrderCancelledEvent(order));
-                        //ticketClient.releaseTicket(request);
-                    } catch (Exception e){
-                        log.error("Error releasing tickets for orderID {}, message: {}",orderTrackingNumber, e.getMessage());
-                    }
             } else {
                 log.info("Order {} cannot be changed to timeout! Current status:{}", orderTrackingNumber, order.getStatus());
             }
         });
     }
 
-    private OrderCancelledEvent mapToOrderCancelledEvent(Order order) {
-        List<OrderItem> orderItemList = order.getOrderItems();
-        List<CategoryItem> categoryItems = new ArrayList<>();
-        for (OrderItem orderItem : orderItemList) {
-            CategoryItem tmp = new CategoryItem(
-                    orderItem.getCategoryId(),
-                    orderItem.getQuantity()
-            );
-            categoryItems.add(tmp);
-        }
-        return new OrderCancelledEvent(
-                order.getOrderTrackingNumber(),
-                categoryItems
-        );
-    }
+
 }
