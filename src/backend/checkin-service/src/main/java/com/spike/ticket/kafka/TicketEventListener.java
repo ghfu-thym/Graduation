@@ -17,7 +17,7 @@ public class TicketEventListener {
     @KafkaListener(topics = "ticket-created-events", groupId = "checkin-group")
     public void handleTicketCreatedEvent(TicketCreatedEvent event) {
 
-        log.info("[Kafka listener] Received ticket created event for ticketId: {}", event.ticketNumber());
+        log.info("[Kafka listener] Received ticket created event for ticketId: {}", event.orderTrackingNumber());
 
         try {
             checkinService.createTicketCheckin(event);

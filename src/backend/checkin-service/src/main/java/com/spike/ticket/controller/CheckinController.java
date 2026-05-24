@@ -33,6 +33,5 @@ public class CheckinController {
             return ResponseEntity.ok(new CheckinDto.ScanResponse(false, result.getMessage()));
         }
     }
-        //TODO: đưa event member từ event service sang, set quyền
 
 }

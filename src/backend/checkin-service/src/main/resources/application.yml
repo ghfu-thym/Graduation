@@ -13,7 +13,7 @@ spring:
 
   datasource:
     # URL kết nối MySQL.
-    # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có (Tiện lợi)
+    # createDatabaseIfNotExist=true: Tự tạo DB nếu chưa có
     # useSSL=false: Tắt bảo mật SSL để đỡ lỗi certificate khi dev
     # allowPublicKeyRetrieval=true: Cho phép driver lấy public key từ server (Bắt buộc với MySQL 8.0+)
     url: jdbc:mysql://localhost:3306/checkin?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
@@ -32,7 +32,6 @@ spring:
       # Tự động so sánh Entity và DB:
       # - Nếu bảng chưa có -> Tự tạo.
       # - Nếu thiếu cột -> Tự thêm.
-      # (Rất tiện cho giai đoạn code Khóa luận)
       ddl-auto: update
 
     # In câu SQL ra console để bạn debug xem Hibernate đang làm gì
@@ -47,6 +46,7 @@ spring:
       host: localhost
       port: 6379
       timeout: 5000ms
+      password: your_redis_password
 
   kafka:
     bootstrap-servers: localhost:9092

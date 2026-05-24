@@ -12,7 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity //Bật tính năng phân quyền @PreAuthorize
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -20,7 +20,6 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Nếu sau này có API cho khách vãng lai xem sự kiện không cần đăng nhập thì thêm vào đây
                         // .requestMatchers("/api/events/public/**").permitAll()
                         .anyRequest().authenticated()
                 )

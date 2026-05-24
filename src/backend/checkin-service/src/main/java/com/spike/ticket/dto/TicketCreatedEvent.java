@@ -1,8 +1,13 @@
 package com.spike.ticket.dto;
 
+import java.util.List;
+
 public record TicketCreatedEvent(
         Long eventId,
-        Long categoryId,
-        String ticketNumber
+        String orderTrackingNumber,
+        String eventName,
+        String username,
+        String email,
+        List<TicketDetail> tickets
 ) {
 }

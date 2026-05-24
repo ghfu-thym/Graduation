@@ -15,7 +15,8 @@ public class CheckInAuthLogic {
         if (auth == null || auth.getToken() == null) return false;
 
         Long userId = Long.parseLong(auth.getToken().getSubject());
+        String email = auth.getToken().getClaimAsString("email");
 
-        return eventMemberRepository.existsByUserIdAndEventId(userId, eventId);
+        return eventMemberRepository.existsByUserEmailAndEventId(email, eventId);
     }
 }
