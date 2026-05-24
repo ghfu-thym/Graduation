@@ -44,5 +44,66 @@ Vấn đề lớn nhất của các hệ thống bán vé thông thường là s
 5. Nếu có event đang xếp hàng, Dispatcher sẽ gọi một Exchanger Function ứng với số event đang chờ. Exchanger sẽ tìm trong DynamoDB các bản ghi trong trạng thái WAITING của event đó, chuyển N bản ghi có timeStamp nhỏ nhất(N tùy vào sức tải của backend) sang ALLOWED.  
 6. Dynamo stream phát hiện thay đổi này, kích hoạt Notifier Function, tạo ra access token và trả về theo đúng connectionID mà websocket gateway đang duy trì.  
 5. FE nhận được message chứa token này sẽ điều hướng về API Gateway HTTP. Lúc này Authorizer Function sẽ cho phép truy cập vào luồng thanh toán và chốt vé.
-  
 
+## Hướng dẫn cài đặt: ##
+
+### 1) Yêu cầu môi trường
+- Java 17+ (Spring Boot 3.2 yêu cầu tối thiểu 17)
+- Maven 3.9+
+- Docker Desktop (để chạy MySQL, Redis, Kafka)
+
+### 2) Khởi động hạ tầng (MySQL, Redis, Kafka)
+Chạy `docker-compose.yml` trong thư mục `src/backend`:
+
+```powershell
+Set-Location D:\Final\Graduation\src\backend
+docker compose up -d
+```
+
+Các dịch vụ hạ tầng sẽ chạy ở:
+- MySQL: `localhost:3306` (root/`3307a001`)
+- Redis: `localhost:6379` (password: `your_redis_password`)
+- Kafka: `localhost:9092`
+- Kafka UI: `http://localhost:8090`
+
+### 3) Biến môi trường cần thiết
+Một số service cần khóa môi trường. Bạn có thể đặt tạm ở PowerShell:
+
+```powershell
+$env:AWS_ACCESS_KEY="<your_aws_access_key>"
+$env:AWS_SECRET_KEY="<your_aws_secret_key>"
+$env:SENDGRID_API_KEY="<your_sendgrid_api_key>"
+```
+
+### 4) Chạy từng service
+Từ thư mục `src/backend`, chạy từng module riêng:
+
+```powershell
+Set-Location D:\Final\Graduation\src\backend
+mvn -pl auth-service spring-boot:run
+```
+
+Các service chính và cổng mặc định:
+- Auth Service: `8083`
+- Event Service: `8084`
+- Inventory Service: `8081`
+- Order Service: `8080`
+- Payment Service: `8085`
+- Notification Service: `8086`
+- Checkin Service: `8082`
+
+Bạn có thể mở nhiều terminal để chạy song song các service còn lại.
+
+### 5) Ghi chú cấu hình DB (MySQL)
+Các DB sẽ được auto-create theo cấu hình hiện tại:
+- `auth_service`
+- `event_service`
+- `ticket_service` (inventory-service)
+- `order_service`
+
+Nếu muốn dọn sạch dữ liệu và khởi động lại từ đầu:
+
+```powershell
+Set-Location D:\Final\Graduation\src\backend
+docker compose down -v
+```
