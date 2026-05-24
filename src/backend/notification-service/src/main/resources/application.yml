@@ -48,18 +48,18 @@ spring:
 ##      port: 6379
 ##      timeout: 5000ms
 #
-#  kafka:
-#    bootstrap-servers: localhost:9092
-#    consumer:
-#      group-id: notification-group
-#      auto-offset-reset: earliest
-#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-#      properties:
-#        spring.json.trusted.packages: "*"
-#    producer:
-#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 ## Cấu hình logging để dễ nhìn lỗi
 #logging:
 #  level:
@@ -71,5 +71,6 @@ app:
     sender-email: phuocthym@gmail.com
     template-id:
       ticket-qr: d-9ee254156127499a92340ad6459fcdcb
+      event-approved: d-ed5cc19e61cb4ea6b9e80715de56e5d0
 #  ticket:
 #    hmac-secret: "${TICKET_HMAC_SECRET:TckS3cr3t2026!HighLoadSystem@Phuoc#99}"
